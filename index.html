@@ -19,7 +19,7 @@
             :root {
                 --bg: #000000;
                 --glass: rgba(28, 28, 30, 0.8);
-                --glass-border: rgba(255, 255, 255, 0.1);
+                --glass-border: rgba(255, 255, 255, 0.3); /* Ярче, для подсветки */
                 --accent: #0a84ff;
                 --danger: #ff453a;
                 --text: #ffffff;
@@ -33,17 +33,19 @@
             margin: 0; 
             padding: 20px 20px calc(130px + env(safe-area-inset-bottom)) 20px;
             -webkit-tap-highlight-color: transparent;
-            /* Плавный скролл */
             -webkit-overflow-scrolling: touch;
         }
 
-        /* Оптимизация для GPU */
+        /* Оптимизация для GPU и "Liquid Glass++" (Подсветка) */
         .glass-panel {
             background: var(--glass);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
+            border: 2px solid var(--glass-border); /* Толще, для подсветки */
+            border-radius: 20px; /* Немного больше скругления для стиля */
+            box-shadow: 
+                0 4px 12px rgba(0,0,0,0.05), /* Старая тень */
+                0 0 15px rgba(255, 255, 255, 0.1); /* Легкое внешнее свечение для подсветки */
             transform: translateZ(0); /* Аппаратное ускорение */
             will-change: transform, opacity;
         }
@@ -65,7 +67,7 @@
             opacity: 0; 
             transform: translateY(-10px); 
             padding: 0 20px 20px 20px;
-            border-top: 1px solid var(--glass-border);
+            border-top: 1px solid var(--glass-border); /* Разделительная линия, сочетающаяся с бордером */
             transition: opacity 0.2s ease, transform 0.2s ease;
         }
         .room-content.open { display: block; opacity: 1; transform: translateY(0); }
@@ -73,7 +75,25 @@
         .resident { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 0.5px solid var(--glass-border); }
         .resident:last-child { border-bottom: none; }
 
-        input[type="checkbox"] { width: 28px; height: 28px; border-radius: 10px; accent-color: var(--accent); }
+        /* Группа чекбоксов - ГОРИЗОНТАЛЬНО */
+        .check-group {
+            display: flex;
+            flex-direction: row; /* ГОРИЗОНТАЛЬНО */
+            align-items: center; /* Центрировать группы чекбоксов по вертикали */
+            gap: 16px; /* Небольшой отступ между двумя чекбоксами */
+        }
+
+        .check-group label {
+            display: flex;
+            flex-direction: row; /* ГОРИЗОНТАЛЬНО внутри label */
+            align-items: center; /* Центрировать смайлик с чекбоксом по вертикали */
+            font-size: 16px; /* Вернуть размер смайлика */
+            color: var(--text); /* Основной цвет текста */
+            gap: 8px; /* Отступ между чекбоксом и смайликом */
+            font-weight: 500;
+        }
+
+        input[type="checkbox"] { width: 22px; height: 22px; border-radius: 8px; accent-color: var(--accent); } /* Чуть меньше для баланса */
 
         /* Фикс Safe Area для нижней панели */
         .main-controls { 
@@ -165,15 +185,15 @@
 <script>
     const SECRET_PIN = "9564";
     const data = [
-        { room: "634", names: ["Лобачев Е.", "Фролов А.", "Беляев М.", "Дуляев А."] },
+        { room: "634", names: ["Лобачев Е.", "Фролов А.", "Беляев M.", "Дуляев А."] },
         { room: "633", names: ["Гусаков Д.", "Дергунов Я."] },
-        { room: "632", names: ["Турсунов С.", "Погосян В."] },
-        { room: "631", names: ["Гавриков С.", "Киргиз Н.", "Кисилёв Р.", "Тверянкин А."] },
-        { room: "624", names: ["Муратов Н.", "Королёв М.", "Коржов С.", "Хохлов А."] },
-        { room: "623", names: ["Бодягин В.", "Иванов Я."] },
+        { room: "632", names: ["Турсунов С.", "Погосян B."] },
+        { room: "631", names: ["Гавриков С.", "Киргиз H.", "Кисилёв Р.", "Тверянкин А."] },
+        { room: "624", names: ["Муратов H.", "Королёв M.", "Коржов С.", "Хохлов А."] },
+        { room: "623", names: ["Бодягин B.", "Иванов Я."] },
         { room: "622", names: ["Обертас Д.", "Мартынов А."] },
-        { room: "621", names: ["Меньшов М.", "Ивченков Е.", "Капусткин Р.", "Порочкин Д."] },
-        { room: "614", names: ["Ненахов В.", "Распопов Т.", "Распоченюк В.", "Бурименко П."] },
+        { room: "621", names: ["Меньшов M.", "Ивченков Е.", "Капусткин Р.", "Порочкин Д."] },
+        { room: "614", names: ["Ненахов B.", "Распопов T.", "Распоченюк B.", "Бурименко П."] },
         { room: "613", names: ["Лазарев Ф.", "Коптин С."] },
         { room: "612", names: ["Фомин С.", "Сычев Д."] },
         { room: "611", names: ["Скрябин С.", "Колесников И.", "Захариков Д.", "Поповкин А."] },
@@ -217,10 +237,10 @@
                     <div class="resident">
                         <span class="res-name" style="${isEmpty ? 'opacity:0.4' : ''}">${name}</span>
                         <div class="check-group">
-                            <label style="display:flex; flex-direction:column; align-items:center; font-size:10px; gap:4px; color:var(--secondary)">
+                            <label>
                                 <input type="checkbox" onchange="save('${idP}', this.checked)" ${isP?'checked':''} ${isEmpty?'disabled':''}>🏠
                             </label>
-                            <label style="display:flex; flex-direction:column; align-items:center; font-size:10px; gap:4px; color:var(--secondary)">
+                            <label>
                                 <input type="checkbox" onchange="save('${idW}', this.checked)" ${isW?'checked':''}>📅
                             </label>
                         </div>
@@ -310,7 +330,7 @@
         navigator.clipboard.writeText(cleanText).then(() => {
             const btn = document.querySelector(type === 'main' ? '.copy-blue' : '.copy-outline');
             const originalText = btn.innerText;
-            btn.innerText = '✅ Готово';
+            btn.innerText = '✅ Скопировано';
             setTimeout(() => btn.innerText = originalText, 1500);
         });
     }
