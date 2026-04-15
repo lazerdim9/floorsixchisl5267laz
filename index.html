@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dorm Ultra Smooth</title>
+    <title>Dorm Pro</title>
     <style>
         :root {
             --bg: #f2f2f7;
@@ -32,114 +32,122 @@
         body { 
             font-family: -apple-system, system-ui, sans-serif; 
             background: var(--bg); color: var(--text);
-            margin: 0; padding: 20px 16px 120px 16px;
+            margin: 0; padding: 20px 16px 140px 16px;
         }
 
-        /* Убираем тени, оставляем четкие границы для скорости */
         .card {
             background: var(--glass);
             border: 1px solid var(--border);
             border-radius: 18px;
             margin-bottom: 12px;
-            overflow: hidden;
-            /* Включаем аппаратный слой */
-            transform: translateZ(0); 
-            will-change: contents;
+            transform: translateZ(0);
         }
 
         .header {
             padding: 14px 18px;
             display: flex; justify-content: space-between; align-items: center;
-            cursor: pointer;
         }
 
-        .title { font-weight: 600; font-size: 17px; }
+        .title { font-weight: 700; font-size: 17px; }
 
-        /* Контейнер анимации */
+        /* Контейнер контента */
         .content-box {
-            display: none; /* По умолчанию скрыто */
-            padding: 0 18px 16px 18px;
-            opacity: 0;
-            transform: translateY(-10px);
-            transition: opacity 0.2s ease, transform 0.2s ease;
+            display: none; 
+            padding: 0 18px 14px 18px;
+            border-top: 1px solid var(--border);
         }
 
-        .card.open .content-box {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .card.open .content-box { display: block; }
 
-        .card.open { border-color: var(--accent); }
-
-        /* Список людей */
         .row {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 0;
+            padding: 12px 0;
             border-bottom: 0.5px solid var(--border);
         }
         .row:last-child { border-bottom: none; }
 
-        .name { font-size: 16px; font-weight: 400; }
+        .name { font-size: 16px; font-weight: 500; }
 
-        .checks { display: flex; gap: 15px; }
-        .checks input { 
-            width: 26px; height: 26px; 
-            border-radius: 6px; 
-            accent-color: var(--accent); 
+        .checks { display: flex; gap: 12px; }
+        .checks label { 
+            display: flex; align-items: center; gap: 4px; 
+            font-size: 18px; /* Размер смайлика */
+        }
+        
+        input[type="checkbox"] { 
+            width: 24px; height: 24px; 
+            accent-color: var(--accent);
+            cursor: pointer;
         }
 
-        /* Кнопка */
+        /* Кнопка "Пусто" */
+        .empty-btn {
+            display: flex; align-items: center; gap: 4px;
+            color: var(--danger); font-size: 12px; font-weight: 600;
+        }
+
+        /* Футер */
         .footer {
             position: fixed; bottom: 0; left: 0; right: 0;
-            padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+            padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
             background: var(--glass);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid var(--border);
             z-index: 100;
         }
 
         .btn {
-            width: 100%; padding: 16px; border-radius: 14px;
+            width: 100%; padding: 16px; border-radius: 16px;
             background: var(--accent); color: white;
-            border: none; font-size: 17px; font-weight: 600;
+            border: none; font-size: 17px; font-weight: 700;
         }
-        .btn:active { opacity: 0.7; }
+        .btn:active { opacity: 0.7; transform: scale(0.98); }
 
-        /* Пин-код */
-        #auth {
-            position: fixed; inset: 0; background: var(--bg);
-            display: flex; align-items: center; justify-content: center; z-index: 1000;
+        /* Стили отчета */
+        #reportOverlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: none; align-items: flex-end; z-index: 1000;
         }
-        .auth-box { text-align: center; width: 80%; }
-        .pin { 
-            width: 100%; padding: 15px; font-size: 30px; text-align: center;
-            border-radius: 15px; border: 2px solid var(--accent);
-            background: var(--glass); color: var(--text); margin-bottom: 20px;
+        .report-modal {
+            background: var(--glass); width: 100%;
+            border-radius: 25px 25px 0 0;
+            padding: 20px 20px calc(30px + env(safe-area-inset-bottom));
+        }
+
+        #pField {
+            width: 100%; padding: 15px; font-size: 24px; text-align: center;
+            border-radius: 12px; border: 2px solid var(--accent);
+            background: var(--bg); color: var(--text); margin: 20px 0;
         }
     </style>
 </head>
 <body>
 
-<div id="auth">
-    <div class="auth-box">
-        <h2 style="margin-bottom:20px">Введите PIN</h2>
-        <input type="password" id="p" class="pin" inputmode="numeric" maxlength="4" placeholder="••••">
-        <button class="btn" onclick="login()">Войти</button>
+<div id="auth" style="position:fixed; inset:0; background:var(--bg); z-index:2000; display:flex; align-items:center; justify-content:center;">
+    <div style="text-align:center; width:80%">
+        <h2>Вход</h2>
+        <input type="password" id="p" class="pField" inputmode="numeric" maxlength="4" style="width:100%; padding:15px; font-size:24px; text-align:center; border-radius:12px; border:2px solid var(--accent);">
+        <button class="btn" style="margin-top:20px" onclick="login()">Войти</button>
     </div>
 </div>
 
 <div id="main" style="display:none">
-    <h1 style="margin-left:5px; font-size:32px;">Этаж</h1>
+    <h1 style="margin: 0 0 20px 5px">Списки</h1>
     <div id="list"></div>
     <div class="footer">
-        <button class="btn" onclick="alert('Отчет готов!')">Сформировать итог</button>
+        <button class="btn" onclick="showReport()">Готово</button>
+    </div>
+</div>
+
+<div id="reportOverlay" onclick="if(event.target==this)this.style.display='none'">
+    <div class="report-modal">
+        <div id="out" style="background:rgba(0,0,0,0.05); padding:15px; border-radius:12px; white-space:pre-wrap; font-size:14px; margin-bottom:15px;"></div>
+        <button class="btn" onclick="copy()">Копировать всё</button>
     </div>
 </div>
 
 <script>
-    const rooms = [
+    const roomsData = [
         { r: "634", n: ["Лобачев Е.", "Фролов А.", "Беляев М.", "Дуляев А."] },
         { r: "633", n: ["Гусаков Д.", "Дергунов Я."] },
         { r: "632", n: ["Турсунов С.", "Погосян В."] },
@@ -155,45 +163,99 @@
         { r: "600", n: ["Грязнов С.", "Андрианов Э."] }
     ];
 
+    let state = JSON.parse(localStorage.getItem('dorm_state_v3')) || {};
+
+    function haptic() {
+        if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(10); // Легкий виброотклик
+        }
+    }
+
     function login() {
         if(document.getElementById('p').value === "9564") {
             document.getElementById('auth').style.display = 'none';
             document.getElementById('main').style.display = 'block';
             render();
+        } else {
+            haptic(); haptic(); // Двойной тык при ошибке
         }
     }
 
+    function save(id, val) {
+        state[id] = val;
+        localStorage.setItem('dorm_state_v3', JSON.stringify(state));
+    }
+
+    function toggleRoom(el) {
+        haptic();
+        el.parentElement.classList.toggle('open');
+    }
+
     function render() {
-        const container = document.getElementById('list');
-        rooms.forEach(room => {
+        const list = document.getElementById('list');
+        list.innerHTML = '';
+        roomsData.forEach(room => {
+            const isE = state[`e_${room.r}`] || false;
             const card = document.createElement('div');
-            card.className = 'card';
-            
+            card.className = `card ${isE ? 'empty' : ''}`;
+            if(isE) card.style.opacity = '0.5';
+
             let rows = '';
             room.n.forEach(name => {
+                const idP = `p_${room.r}_${name}`;
+                const idW = `w_${room.r}_${name}`;
+                const checkP = state[idP] !== undefined ? state[idP] : true;
+                const checkW = state[idW] || false;
+
                 rows += `
                 <div class="row">
                     <span class="name">${name}</span>
                     <div class="checks">
-                        <input type="checkbox" checked>
-                        <input type="checkbox">
+                        <label>🏠<input type="checkbox" onchange="haptic();save('${idP}', this.checked)" ${checkP?'checked':''} ${isE?'disabled':''}></label>
+                        <label>📅<input type="checkbox" onchange="haptic();save('${idW}', this.checked)" ${checkW?'checked':''}></label>
                     </div>
                 </div>`;
             });
 
             card.innerHTML = `
-                <div class="header" onclick="this.parentElement.classList.toggle('open')">
+                <div class="header" onclick="toggleRoom(this)">
                     <span class="title">Комната ${room.r}</span>
-                    <span style="font-size:12px; opacity:0.5">▼</span>
+                    <label class="empty-btn" onclick="event.stopPropagation()">
+                        Пусто <input type="checkbox" onchange="haptic();save('e_${room.r}', this.checked);render()" ${isE?'checked':''}>
+                    </label>
                 </div>
-                <div class="content-box">
-                    ${rows}
-                </div>
+                <div class="content-box">${rows}</div>
             `;
-            container.appendChild(card);
+            list.appendChild(card);
         });
     }
-</script>
 
+    function showReport() {
+        haptic();
+        let present = 0, abs = [], wkd = [];
+        roomsData.forEach(r => {
+            if(state[`e_${r.r}`]) abs.push(`• В ${r.r} никого нет`);
+            else {
+                let localAbs = [];
+                r.n.forEach(n => {
+                    if(state[`p_${r.r}_${n}`] !== false) present++;
+                    else localAbs.push(n.split(' ')[0]);
+                });
+                if(localAbs.length) abs.push(`• ${localAbs.join(', ')} (${r.r})`);
+            }
+            r.n.forEach(n => { if(state[`w_${r.r}_${n}`]) wkd.push(`${n.split(' ')[0]} (${r.r})`); });
+        });
+
+        const res = `ИТОГ: ${present} чел.\n\nОТСУТСТВУЮТ:\n${abs.join('\n')}\n\nНА ВЫХОДНЫЕ:\n${wkd.join(', ')}`;
+        document.getElementById('out').innerText = res;
+        document.getElementById('reportOverlay').style.display = 'flex';
+    }
+
+    function copy() {
+        haptic();
+        navigator.clipboard.writeText(document.getElementById('out').innerText);
+        alert('Скопировано');
+    }
+</script>
 </body>
 </html>
