@@ -3,146 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dorm Pro</title>
+    <title>Dorm Minimalist</title>
     <style>
         :root {
             --bg: #f2f2f7;
-            --glass: rgba(255, 255, 255, 0.9);
-            --border: rgba(0, 0, 0, 0.1);
+            --card-bg: #ffffff;
             --accent: #007aff;
             --danger: #ff3b30;
-            --text: #1c1c1e;
+            --text: #000000;
             --secondary: #8e8e93;
+            --border: rgba(0,0,0,0.04);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg: #000000;
-                --glass: rgba(28, 28, 30, 0.95);
-                --border: rgba(255, 255, 255, 0.15);
+                --card-bg: #1c1c1e;
                 --accent: #0a84ff;
                 --danger: #ff453a;
                 --text: #ffffff;
-                --secondary: #98989d;
+                --secondary: #a1a1aa;
+                --border: rgba(255,255,255,0.06);
             }
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
         body { 
-            font-family: -apple-system, system-ui, sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: var(--bg); color: var(--text);
             margin: 0; padding: 20px 16px 140px 16px;
+            -webkit-font-smoothing: antialiased;
         }
+
+        h1 { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin: 10px 0 25px 8px; }
 
         .card {
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 18px;
+            background: var(--card-bg);
+            border-radius: 24px;
             margin-bottom: 12px;
-            transform: translateZ(0);
+            border: 1px solid var(--border);
+            transition: transform 0.2s ease;
         }
+
+        .card:active { transform: scale(0.99); }
 
         .header {
-            padding: 14px 18px;
+            padding: 18px 20px;
             display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer;
         }
 
-        .title { font-weight: 700; font-size: 17px; }
+        .title { font-weight: 600; font-size: 18px; letter-spacing: -0.4px; }
 
-        /* Контейнер контента */
-        .content-box {
-            display: none; 
-            padding: 0 18px 14px 18px;
+        .empty-toggle {
+            display: flex; align-items: center; gap: 6px;
+            color: var(--danger); font-size: 13px; font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .empty-toggle input { 
+            width: 18px; height: 18px; accent-color: var(--danger);
+        }
+
+        /* Плавное появление контента */
+        .content {
+            display: none;
+            padding: 0 20px 20px 20px;
             border-top: 1px solid var(--border);
+            animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .card.open .content-box { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card.open .content { display: block; }
 
         .row {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 0;
+            padding: 14px 0;
             border-bottom: 0.5px solid var(--border);
         }
         .row:last-child { border-bottom: none; }
 
-        .name { font-size: 16px; font-weight: 500; }
+        .name { font-size: 16px; font-weight: 400; opacity: 0.9; }
 
-        .checks { display: flex; gap: 12px; }
+        .checks { display: flex; gap: 16px; }
         .checks label { 
-            display: flex; align-items: center; gap: 4px; 
-            font-size: 18px; /* Размер смайлика */
+            display: flex; align-items: center; gap: 6px; font-size: 18px;
         }
         
         input[type="checkbox"] { 
             width: 24px; height: 24px; 
+            border-radius: 6px;
             accent-color: var(--accent);
             cursor: pointer;
         }
 
-        /* Кнопка "Пусто" */
-        .empty-btn {
-            display: flex; align-items: center; gap: 4px;
-            color: var(--danger); font-size: 12px; font-weight: 600;
-        }
-
-        /* Футер */
+        /* Фиксированный футер */
         .footer {
             position: fixed; bottom: 0; left: 0; right: 0;
-            padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
-            background: var(--glass);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 16px 20px calc(25px + env(safe-area-inset-bottom));
+            background: var(--card-bg);
             border-top: 1px solid var(--border);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             z-index: 100;
         }
 
-        .btn {
-            width: 100%; padding: 16px; border-radius: 16px;
+        .btn-main {
+            width: 100%; padding: 18px; border-radius: 20px;
             background: var(--accent); color: white;
-            border: none; font-size: 17px; font-weight: 700;
+            border: none; font-size: 17px; font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 122, 255, 0.15);
         }
-        .btn:active { opacity: 0.7; transform: scale(0.98); }
 
-        /* Стили отчета */
-        #reportOverlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+        .btn-main:active { opacity: 0.8; transform: scale(0.98); }
+
+        /* Отчет */
+        #overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.3);
             display: none; align-items: flex-end; z-index: 1000;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         }
-        .report-modal {
-            background: var(--glass); width: 100%;
-            border-radius: 25px 25px 0 0;
-            padding: 20px 20px calc(30px + env(safe-area-inset-bottom));
+        .modal {
+            background: var(--card-bg); width: 100%;
+            border-radius: 32px 32px 0 0;
+            padding: 24px 24px calc(40px + env(safe-area-inset-bottom));
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
         }
 
-        #pField {
-            width: 100%; padding: 15px; font-size: 24px; text-align: center;
-            border-radius: 12px; border: 2px solid var(--accent);
-            background: var(--bg); color: var(--text); margin: 20px 0;
+        #out {
+            background: var(--bg); padding: 20px; border-radius: 20px;
+            font-size: 15px; line-height: 1.5; margin-bottom: 20px;
+            max-height: 50vh; overflow-y: auto;
+        }
+
+        /* Экран входа */
+        #auth {
+            position: fixed; inset: 0; background: var(--bg);
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
+        }
+        .auth-card {
+            background: var(--card-bg); padding: 35px 25px; 
+            border-radius: 30px; width: 85%; max-width: 320px; text-align: center;
+            border: 1px solid var(--border);
+        }
+        .pin-input {
+            width: 100%; padding: 15px; font-size: 32px; text-align: center;
+            border-radius: 18px; border: 2px solid var(--border);
+            background: var(--bg); color: var(--text); margin: 25px 0;
+            letter-spacing: 8px;
         }
     </style>
 </head>
 <body>
 
-<div id="auth" style="position:fixed; inset:0; background:var(--bg); z-index:2000; display:flex; align-items:center; justify-content:center;">
-    <div style="text-align:center; width:80%">
-        <h2>Вход</h2>
-        <input type="password" id="p" class="pField" inputmode="numeric" maxlength="4" style="width:100%; padding:15px; font-size:24px; text-align:center; border-radius:12px; border:2px solid var(--accent);">
-        <button class="btn" style="margin-top:20px" onclick="login()">Войти</button>
+<div id="auth">
+    <div class="auth-card">
+        <h2 style="margin:0">Dorm App</h2>
+        <input type="password" id="p" class="pin-input" inputmode="numeric" maxlength="4" placeholder="••••">
+        <button class="btn-main" onclick="login()">Войти</button>
     </div>
 </div>
 
 <div id="main" style="display:none">
-    <h1 style="margin: 0 0 20px 5px">Списки</h1>
+    <h1>Этаж 6</h1>
     <div id="list"></div>
     <div class="footer">
-        <button class="btn" onclick="showReport()">Готово</button>
+        <button class="btn-main" onclick="showReport()">Сформировать отчет</button>
     </div>
 </div>
 
-<div id="reportOverlay" onclick="if(event.target==this)this.style.display='none'">
-    <div class="report-modal">
-        <div id="out" style="background:rgba(0,0,0,0.05); padding:15px; border-radius:12px; white-space:pre-wrap; font-size:14px; margin-bottom:15px;"></div>
-        <button class="btn" onclick="copy()">Копировать всё</button>
+<div id="overlay" onclick="if(event.target==this)this.style.display='none'">
+    <div class="modal">
+        <div style="width:40px; height:5px; background:var(--secondary); border-radius:10px; margin: -10px auto 20px auto; opacity: 0.3;"></div>
+        <div id="out"></div>
+        <button class="btn-main" onclick="copy()">Копировать в буфер</button>
+        <button class="btn-main" style="background:none; color:var(--danger); box-shadow:none; margin-top:10px;" onclick="reset()">Сбросить данные</button>
     </div>
 </div>
 
@@ -163,32 +202,19 @@
         { r: "600", n: ["Грязнов С.", "Андрианов Э."] }
     ];
 
-    let state = JSON.parse(localStorage.getItem('dorm_state_v3')) || {};
-
-    function haptic() {
-        if (window.navigator && window.navigator.vibrate) {
-            window.navigator.vibrate(10); // Легкий виброотклик
-        }
-    }
+    let state = JSON.parse(localStorage.getItem('dorm_minimal_v1')) || {};
 
     function login() {
         if(document.getElementById('p').value === "9564") {
             document.getElementById('auth').style.display = 'none';
             document.getElementById('main').style.display = 'block';
             render();
-        } else {
-            haptic(); haptic(); // Двойной тык при ошибке
         }
     }
 
     function save(id, val) {
         state[id] = val;
-        localStorage.setItem('dorm_state_v3', JSON.stringify(state));
-    }
-
-    function toggleRoom(el) {
-        haptic();
-        el.parentElement.classList.toggle('open');
+        localStorage.setItem('dorm_minimal_v1', JSON.stringify(state));
     }
 
     function render() {
@@ -197,8 +223,8 @@
         roomsData.forEach(room => {
             const isE = state[`e_${room.r}`] || false;
             const card = document.createElement('div');
-            card.className = `card ${isE ? 'empty' : ''}`;
-            if(isE) card.style.opacity = '0.5';
+            card.className = `card`;
+            if(isE) card.style.opacity = '0.4';
 
             let rows = '';
             room.n.forEach(name => {
@@ -211,27 +237,26 @@
                 <div class="row">
                     <span class="name">${name}</span>
                     <div class="checks">
-                        <label>🏠<input type="checkbox" onchange="haptic();save('${idP}', this.checked)" ${checkP?'checked':''} ${isE?'disabled':''}></label>
-                        <label>📅<input type="checkbox" onchange="haptic();save('${idW}', this.checked)" ${checkW?'checked':''}></label>
+                        <label>🏠<input type="checkbox" onchange="save('${idP}', this.checked)" ${checkP?'checked':''} ${isE?'disabled':''}></label>
+                        <label>📅<input type="checkbox" onchange="save('${idW}', this.checked)" ${checkW?'checked':''}></label>
                     </div>
                 </div>`;
             });
 
             card.innerHTML = `
-                <div class="header" onclick="toggleRoom(this)">
+                <div class="header" onclick="this.parentElement.classList.toggle('open')">
                     <span class="title">Комната ${room.r}</span>
-                    <label class="empty-btn" onclick="event.stopPropagation()">
-                        Пусто <input type="checkbox" onchange="haptic();save('e_${room.r}', this.checked);render()" ${isE?'checked':''}>
+                    <label class="empty-toggle" onclick="event.stopPropagation()">
+                        Пусто <input type="checkbox" onchange="save('e_${room.r}', this.checked);render()" ${isE?'checked':''}>
                     </label>
                 </div>
-                <div class="content-box">${rows}</div>
+                <div class="content">${rows}</div>
             `;
             list.appendChild(card);
         });
     }
 
     function showReport() {
-        haptic();
         let present = 0, abs = [], wkd = [];
         roomsData.forEach(r => {
             if(state[`e_${r.r}`]) abs.push(`• В ${r.r} никого нет`);
@@ -248,13 +273,19 @@
 
         const res = `ИТОГ: ${present} чел.\n\nОТСУТСТВУЮТ:\n${abs.join('\n')}\n\nНА ВЫХОДНЫЕ:\n${wkd.join(', ')}`;
         document.getElementById('out').innerText = res;
-        document.getElementById('reportOverlay').style.display = 'flex';
+        document.getElementById('overlay').style.display = 'flex';
     }
 
     function copy() {
-        haptic();
         navigator.clipboard.writeText(document.getElementById('out').innerText);
-        alert('Скопировано');
+        alert('Скопировано!');
+    }
+
+    function reset() {
+        if(confirm("Очистить все данные?")) {
+            localStorage.removeItem('dorm_minimal_v1');
+            location.reload();
+        }
     }
 </script>
 </body>
