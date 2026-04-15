@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dorm Gold</title>
+    <title>Dorm Clean</title>
     <style>
         :root {
             --bg: #f2f2f7;
@@ -13,7 +13,7 @@
             --text: #000000;
             --secondary: #8e8e93;
             --border: rgba(0,0,0,0.05);
-            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+            --shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
 
         @media (prefers-color-scheme: dark) {
@@ -24,8 +24,8 @@
                 --danger: #ff453a;
                 --text: #ffffff;
                 --secondary: #98989d;
-                --border: rgba(255,255,255,0.1);
-                --shadow: 0 4px 15px rgba(0,0,0,0.3);
+                --border: rgba(255,255,255,0.08);
+                --shadow: 0 4px 12px rgba(0,0,0,0.2);
             }
         }
 
@@ -39,26 +39,17 @@
 
         h1 { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin: 10px 0 25px 10px; }
 
-        /* Карточка без блюра для скорости */
         .card {
             background: var(--card);
             border-radius: 28px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
-            transition: transform 0.2s ease, opacity 0.2s ease;
-            position: relative;
+            transition: transform 0.1s ease;
             overflow: hidden;
         }
 
-        /* Индикатор сбоку */
-        .card::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-            background: var(--accent); opacity: 0; transition: 0.3s;
-        }
-        .card.is-active::before { opacity: 1; }
-
-        .card:active { transform: scale(0.98); }
+        .card:active { transform: scale(0.99); }
 
         .header {
             padding: 20px 22px;
@@ -74,17 +65,13 @@
         }
         .empty-toggle input { width: 20px; height: 20px; accent-color: var(--danger); }
 
-        /* Контент через display:block для стабильности */
         .content {
             display: none;
             padding: 0 22px 20px 22px;
             border-top: 1px solid var(--border);
-            animation: slideIn 0.2s ease-out;
         }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
         .card.open .content { display: block; }
-        .card.open { border-color: rgba(0, 122, 255, 0.3); }
 
         .row {
             display: flex; align-items: center; justify-content: space-between;
@@ -100,11 +87,9 @@
         
         input[type="checkbox"] { 
             width: 26px; height: 26px; 
-            border-radius: 8px;
             accent-color: #007aff;
         }
 
-        /* Футер */
         .footer {
             position: fixed; bottom: 0; left: 0; right: 0;
             padding: 16px 20px calc(30px + env(safe-area-inset-bottom));
@@ -117,11 +102,9 @@
             width: 100%; padding: 18px; border-radius: 22px;
             background: var(--accent); color: white;
             border: none; font-size: 17px; font-weight: 700;
-            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.25);
         }
-        .btn-main:active { transform: scale(0.96); opacity: 0.9; }
+        .btn-main:active { opacity: 0.8; }
 
-        /* Модалка */
         #overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.4);
             display: none; align-items: flex-end; z-index: 1000;
@@ -134,7 +117,7 @@
         #out {
             background: var(--bg); padding: 18px; border-radius: 22px;
             font-size: 14px; margin-bottom: 20px; white-space: pre-wrap;
-            border: 1px solid var(--border);
+            border: 1px solid var(--border); max-height: 40vh; overflow-y: auto;
         }
 
         .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
@@ -147,7 +130,7 @@
 <body>
 
 <div id="auth" style="position:fixed; inset:0; background:var(--bg); z-index:2000; display:flex; align-items:center; justify-content:center;">
-    <div style="background:var(--card); padding:35px; border-radius:32px; width:85%; max-width:320px; text-align:center; box-shadow: var(--shadow);">
+    <div style="background:var(--card); padding:35px; border-radius:32px; width:85%; max-width:320px; text-align:center;">
         <h2 style="margin:0 0 10px 0">Dorm App</h2>
         <input type="password" id="p" style="width:100%; padding:15px; font-size:28px; text-align:center; border-radius:18px; border:2px solid var(--bg); background:var(--bg); color:var(--text);" inputmode="numeric" maxlength="4">
         <button class="btn-main" style="margin-top:20px" onclick="login()">Войти</button>
@@ -155,13 +138,13 @@
 </div>
 
 <div id="main" style="display:none">
-    <div style="display:flex; justify-content:space-between; align-items:center; padding-right:10px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding-right:15px;">
         <h1>Этаж 6</h1>
-        <button onclick="logout()" style="background:none; border:none; color:var(--secondary); font-weight:600;">Выход</button>
+        <button onclick="logout()" style="background:none; border:none; color:var(--secondary); font-weight:600; font-size:14px;">Выход</button>
     </div>
     <div id="list"></div>
     <div class="footer">
-        <button class="btn-main" onclick="showReport()">Сформировать отчет</button>
+        <button class="btn-main" onclick="showReport()">Готово</button>
     </div>
 </div>
 
@@ -174,7 +157,7 @@
             <button class="btn-sec" onclick="copyWkd()">Копия выход.</button>
         </div>
         <button class="btn-main" onclick="closeModal()">Закрыть</button>
-        <button onclick="resetData()" style="width:100%; background:none; border:none; color:var(--danger); margin-top:25px; font-weight:600; font-size:13px;">Сбросить все данные</button>
+        <button onclick="resetData()" style="width:100%; background:none; border:none; color:var(--danger); margin-top:25px; font-weight:600; font-size:13px;">Сбросить всё</button>
     </div>
 </div>
 
@@ -195,10 +178,10 @@
         { r: "600", n: ["Грязнов С.", "Андрианов Э."] }
     ];
 
-    let state = JSON.parse(localStorage.getItem('dorm_v6_state')) || {};
+    let state = JSON.parse(localStorage.getItem('dorm_v7_state')) || {};
     let tAbs = "", tWkd = "";
 
-    if(localStorage.getItem('dorm_auth_v6') === 'true') {
+    if(localStorage.getItem('dorm_auth_v7') === 'true') {
         document.getElementById('auth').style.display = 'none';
         document.getElementById('main').style.display = 'block';
         render();
@@ -206,7 +189,7 @@
 
     function login() {
         if(document.getElementById('p').value === "9564") {
-            localStorage.setItem('dorm_auth_v6', 'true');
+            localStorage.setItem('dorm_auth_v7', 'true');
             document.getElementById('auth').style.display = 'none';
             document.getElementById('main').style.display = 'block';
             render();
@@ -214,13 +197,13 @@
     }
 
     function logout() {
-        localStorage.removeItem('dorm_auth_v6');
+        localStorage.removeItem('dorm_auth_v7');
         location.reload();
     }
 
     function save(id, val) {
         state[id] = val;
-        localStorage.setItem('dorm_v6_state', JSON.stringify(state));
+        localStorage.setItem('dorm_v7_state', JSON.stringify(state));
     }
 
     function render() {
@@ -229,7 +212,7 @@
         roomsData.forEach(room => {
             const isE = state[`e_${room.r}`] || false;
             const card = document.createElement('div');
-            card.className = `card ${!isE ? 'is-active' : ''}`;
+            card.className = 'card';
             if(isE) card.style.opacity = '0.4';
 
             let rows = '';
@@ -272,8 +255,7 @@
             }
             r.n.forEach(n => { if(state[`w_${r.r}_${n}`]) wkd.push(`${n.split(' ')[0]} (${r.r})`); });
         });
-        tAbs = abs.join('\n');
-        tWkd = wkd.join(', ');
+        tAbs = abs.join('\n'); tWkd = wkd.join(', ');
         document.getElementById('out').innerText = `ИТОГ: ${count} чел.\n\nОТСУТСТВУЮТ:\n${tAbs || 'Нет'}\n\nВЫХОДНЫЕ:\n${tWkd || 'Нет'}`;
         document.getElementById('overlay').style.display = 'flex';
     }
@@ -281,7 +263,7 @@
     function closeModal() { document.getElementById('overlay').style.display = 'none'; }
     function copyAbs() { navigator.clipboard.writeText(tAbs || "Все на месте"); alert('Скопировано'); }
     function copyWkd() { navigator.clipboard.writeText(tWkd || "Никого"); alert('Скопировано'); }
-    function resetData() { if(confirm("Сбросить?")) { localStorage.removeItem('dorm_v6_state'); location.reload(); } }
+    function resetData() { if(confirm("Очистить все?")) { localStorage.removeItem('dorm_v7_state'); location.reload(); } }
 </script>
 </body>
 </html>
