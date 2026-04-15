@@ -3,267 +3,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dorm Glow Minimal</title>
+    <title>Dorm Ultimate</title>
     <style>
         :root {
             --bg: #f2f2f7;
-            --card-bg: #ffffff;
+            --glass: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
             --accent: #007aff;
             --danger: #ff3b30;
-            --text: #000000;
+            --text: #1c1c1e;
             --secondary: #8e8e93;
-            --border: rgba(0,0,0,0.04);
-            /* Мягкое свечение для светлой темы */
-            --glow: 0 8px 20px rgba(0,0,0,0.06);
+            /* Рассеянное свечение для глубины */
+            --glow: 0 10px 30px rgba(0,0,0,0.08);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg: #000000;
-                --card-bg: #1c1c1e;
+                --glass: rgba(28, 28, 30, 0.8);
+                --glass-border: rgba(255, 255, 255, 0.12);
                 --accent: #0a84ff;
                 --danger: #ff453a;
                 --text: #ffffff;
-                --secondary: #a1a1aa;
-                --border: rgba(255,255,255,0.08);
-                /* Сияние для темной темы */
-                --glow: 0 4px 15px rgba(10, 132, 255, 0.15);
+                --secondary: #98989d;
+                --glow: 0 5px 20px rgba(10, 132, 255, 0.15);
             }
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
         body { 
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg); color: var(--text);
             margin: 0; padding: 20px 16px 160px 16px;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
-        h1 { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin: 10px 0 25px 8px; }
+        h1 { font-size: 34px; font-weight: 800; letter-spacing: -1.2px; margin: 15px 0 30px 10px; }
 
-        .card {
-            background: var(--card-bg);
+        /* Эффект "Жидкого стекла" */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
             border-radius: 24px;
-            margin-bottom: 16px;
-            border: 1px solid var(--border);
             box-shadow: var(--glow);
-            will-change: transform; /* Подсказка для GPU */
-            transition: transform 0.2s ease;
+            transform: translateZ(0); /* Включает GPU слой */
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .card:active { transform: scale(0.98); }
+        .room-block { margin-bottom: 16px; width: 100%; }
+        .room-block.empty-room { opacity: 0.5; transform: scale(0.97); }
 
-        .header {
-            padding: 20px;
-            display: flex; justify-content: space-between; align-items: center;
+        /* Заголовок с мягким откликом */
+        .room-header { 
+            padding: 20px; display: flex; justify-content: space-between; align-items: center; 
+            cursor: pointer;
         }
+        .room-header:active { transform: scale(0.99); opacity: 0.8; }
+        
+        .room-title { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
 
-        .title { font-weight: 700; font-size: 18px; }
+        .arrow { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: var(--secondary); font-size: 10px; }
 
         .empty-toggle {
-            display: flex; align-items: center; gap: 6px;
+            display: flex; align-items: center; gap: 8px;
             color: var(--danger); font-size: 13px; font-weight: 600;
         }
+        .empty-toggle input { width: 22px; height: 22px; accent-color: var(--danger); }
 
-        .content {
-            display: none;
+        /* Плавная GPU анимация сворачивания */
+        .room-content-wrapper {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        .room-content-wrapper.open { grid-template-rows: 1fr; }
+
+        .room-content { 
+            min-height: 0; 
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
             padding: 0 20px 20px 20px;
-            border-top: 1px solid var(--border);
+        }
+        .room-content-wrapper.open .room-content { 
+            opacity: 1; transform: translateY(0); 
+            border-top: 1px solid var(--glass-border); 
+            padding-top: 15px;
         }
 
-        .card.open .content { display: block; }
-
-        .row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 0;
-            border-bottom: 0.5px solid var(--border);
+        .resident { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 14px 0; border-bottom: 0.5px solid var(--glass-border); 
         }
-        .row:last-child { border-bottom: none; }
+        .resident:last-child { border-bottom: none; }
+        .res-name { font-weight: 500; font-size: 16px; }
 
-        .name { font-size: 16px; font-weight: 500; }
-
-        .checks { display: flex; gap: 16px; }
-        .checks label { display: flex; align-items: center; gap: 6px; font-size: 19px; }
-        
+        .check-group { display: flex; gap: 16px; }
+        .check-group label { display: flex; align-items: center; gap: 6px; font-size: 19px; }
         input[type="checkbox"] { 
-            width: 26px; height: 26px; border-radius: 8px;
+            width: 28px; height: 28px; 
+            border-radius: 9px;
             accent-color: var(--accent);
+            cursor: pointer;
         }
 
-        .footer {
+        /* Футер "Жидкое стекло" */
+        .main-controls { 
             position: fixed; bottom: 0; left: 0; right: 0;
-            padding: 16px 20px calc(30px + env(safe-area-inset-bottom));
-            background: var(--card-bg);
-            border-top: 1px solid var(--border);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            z-index: 100;
+            display: flex; justify-content: center;
+            background: var(--glass);
+            backdrop-filter: blur(25px) saturate(200%);
+            -webkit-backdrop-filter: blur(25px) saturate(200%);
+            padding: 15px 20px calc(25px + env(safe-area-inset-bottom)) 20px;
+            border-top: 1px solid var(--glass-border);
+            z-index: 1000;
         }
 
-        .btn-main {
-            width: 100%; padding: 18px; border-radius: 20px;
-            background: var(--accent); color: white;
-            border: none; font-size: 17px; font-weight: 700;
+        .btn-main { 
+            width: 100%; max-width: 440px; background: var(--accent); color: white; padding: 18px; 
+            border-radius: 20px; border: none; font-size: 17px; font-weight: 700; 
+            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.2);
+            transition: transform 0.15s ease, opacity 0.15s ease;
         }
+        .btn-main:active { transform: scale(0.97); opacity: 0.9; }
 
-        .btn-main:active { opacity: 0.7; }
-
-        #overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-            display: none; align-items: flex-end; z-index: 1000;
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        /* Отчет (Сквиркл) */
+        #reportScreen {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); 
+            backdrop-filter: blur(10px); z-index: 99999; 
+            display: none; flex-direction: column; justify-content: flex-end;
+            animation: fadeInOverlay 0.3s ease;
         }
+        @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
 
-        .modal {
-            background: var(--card-bg); width: 100%;
-            border-radius: 32px 32px 0 0;
-            padding: 24px 20px calc(40px + env(safe-area-inset-bottom));
+        .report-modal {
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-radius: 35px 35px 0 0; 
+            padding: 25px 20px calc(30px + env(safe-area-inset-bottom)) 20px;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            width: 100%; max-width: 500px; align-self: center;
         }
+        #reportScreen.active .report-modal { transform: translateY(0); }
 
-        #out {
-            background: var(--bg); padding: 15px; border-radius: 20px;
-            font-size: 14px; margin-bottom: 20px; max-height: 40vh; overflow-y: auto;
+        .report-box { 
+            font-size: 15px; background: rgba(0,0,0,0.03); padding: 20px; 
+            border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--glass-border); 
+            white-space: pre-wrap;
         }
-
-        .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         
-        .btn-sec {
-            background: var(--bg); color: var(--text); padding: 15px;
-            border-radius: 18px; border: none; font-weight: 600; font-size: 14px;
+        .grid-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .btn-sec { 
+            background: var(--bg); color: var(--text); padding: 16px; 
+            border-radius: 18px; border: none; font-weight: 600; font-size: 14px; 
+            transition: background 0.2s ease;
         }
+        .btn-sec:active { background: rgba(0,0,0,0.05); }
+
+        /* Экран входа */
+        #authScreen {
+            position: fixed; inset: 0; background: var(--bg);
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
+            height: 100dvh;
+        }
+        .auth-card {
+            background: var(--glass);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            padding: 35px 25px; border-radius: 30px; width: 85%; max-width: 320px; text-align: center;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .pin-input {
+            width: 100%; padding: 15px; font-size: 32px; text-align: center;
+            border-radius: 18px; border: 2px solid var(--accent);
+            background: rgba(0,0,0,0.03); color: var(--text); margin: 25px 0;
+            letter-spacing: 8px; outline: none; transition: border-color 0.2s;
+        }
+        .pin-input:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(0, 122, 255, 0.2); }
     </style>
 </head>
 <body>
 
-<div id="auth" style="position:fixed; inset:0; background:var(--bg); z-index:2000; display:flex; align-items:center; justify-content:center;">
-    <div style="background:var(--card-bg); padding:30px; border-radius:30px; width:80%; text-align:center;">
-        <h2 style="margin-top:0">Вход</h2>
-        <input type="password" id="p" style="width:100%; padding:15px; font-size:24px; text-align:center; border-radius:15px; border:1px solid var(--border); background:var(--bg); color:var(--text);" inputmode="numeric" maxlength="4">
-        <button class="btn-main" style="margin-top:20px" onclick="login()">Войти</button>
+<div id="authScreen">
+    <div class="auth-card">
+        <h2 style="margin: 0 0 5px 0; font-weight: 800;">Dorm Pro</h2>
+        <p style="color: var(--secondary); font-size: 14px; margin: 0;">Введите PIN-код для входа</p>
+        <input type="password" id="pinInput" class="pin-input" inputmode="numeric" maxlength="4" placeholder="••••">
+        <button class="btn-main" onclick="checkPin()">Войти</button>
     </div>
 </div>
 
-<div id="main" style="display:none">
+<div id="mainContent" style="display:none">
     <h1>Этаж 6</h1>
     <div id="list"></div>
-    <div class="footer">
-        <button class="btn-main" onclick="showReport()">Готово</button>
+    <div class="main-controls">
+        <button class="btn-main" onclick="openReport()">Готово</button>
     </div>
 </div>
 
-<div id="overlay" onclick="if(event.target==this)this.style.display='none'">
-    <div class="modal">
-        <div style="width:40px; height:5px; background:var(--secondary); border-radius:10px; margin:-10px auto 20px auto; opacity:0.3;"></div>
-        <div id="out"></div>
+<div id="reportScreen" onclick="if(event.target==this)closeModal()">
+    <div class="report-modal">
+        <div style="width: 40px; height: 5px; background: var(--secondary); border-radius: 10px; margin: -10px auto 20px auto; opacity: 0.3;"></div>
+        <div id="reportOutput" class="report-box"></div>
+        
         <div class="grid-btns">
-            <button class="btn-sec" onclick="copyAbs()">Копия отсутсв.</button>
-            <button class="btn-sec" onclick="copyWkd()">Копия выход.</button>
+            <button class="btn-sec" onclick="copyAbs()">Копия Отсутствующих</button>
+            <button class="btn-sec" onclick="copyWkd()">Копия Выходных</button>
         </div>
-        <button class="btn-main" style="margin-top:10px;" onclick="location.reload()">Закрыть</button>
+        
+        <button class="btn-main" onclick="closeModal()">Закрыть</button>
+        
+        <button onclick="resetAllData()" style="width: 100%; background: none; border: none; color: var(--danger); margin-top: 25px; font-weight: 600; font-size: 13px;">
+            Очистить все данные
+        </button>
     </div>
 </div>
 
 <script>
-    const roomsData = [
-        { r: "634", n: ["Лобачев Е.", "Фролов А.", "Беляев М.", "Дуляев А."] },
-        { r: "633", n: ["Гусаков Д.", "Дергунов Я."] },
-        { r: "632", n: ["Турсунов С.", "Погосян В."] },
-        { r: "631", n: ["Гавриков С.", "Киргиз Н.", "Кисилёв Р.", "Тверянкин А."] },
-        { r: "624", n: ["Муратов Н.", "Королёв М.", "Коржов С.", "Хохлов А."] },
-        { r: "623", n: ["Бодягин В.", "Иванов Я."] },
-        { r: "622", n: ["Обертас Д.", "Мартынов А."] },
-        { r: "621", n: ["Меньшов М.", "Ивченков Е.", "Капусткин Р.", "Порочкин Д."] },
-        { r: "614", n: ["Ненахов В.", "Распопов Т.", "Распоченюк В.", "Бурименко П."] },
-        { r: "613", n: ["Лазарев Ф.", "Коптин С."] },
-        { r: "612", n: ["Фомин С.", "Сычев Д."] },
-        { r: "611", n: ["Скрябин С.", "Колесников И.", "Захариков Д.", "Поповкин А."] },
-        { r: "600", n: ["Грязнов С.", "Андрианов Э."] }
+    const SECRET_PIN = "9564";
+    const data = [
+        { room: "634", names: ["Лобачев Е.", "Фролов А.", "Беляев М.", "Дуляев А."] },
+        { room: "633", names: ["Гусаков Д.", "Дергунов Я."] },
+        { room: "632", names: ["Турсунов С.", "Погосян В."] },
+        { room: "631", names: ["Гавриков С.", "Киргиз Н.", "Кисилёв Р.", "Тверянкин А."] },
+        { room: "624", names: ["Муратов Н.", "Королёв М.", "Коржов С.", "Хохлов А."] },
+        { room: "623", names: ["Бодягин В.", "Иванов Я."] },
+        { room: "622", names: ["Обертас Д.", "Мартынов А."] },
+        { room: "621", names: ["Меньшов М.", "Ивченков Е.", "Капусткин Р.", "Порочкин Д."] },
+        { room: "614", names: ["Ненахов В.", "Распопов Т.", "Распоченюк В.", "Бурименко П."] },
+        { room: "613", names: ["Лазарев Ф.", "Коптин С."] },
+        { room: "612", names: ["Фомин С.", "Сычев Д."] },
+        { room: "611", names: ["Скрябин С.", "Колесников И.", "Захариков Д.", "Поповкин А."] },
+        { room: "600", names: ["Грязнов С.", "Андрианов Э."] }
     ];
 
-    let state = JSON.parse(localStorage.getItem('dorm_final_v1')) || {};
-    let lastAbs = "", lastWkd = "";
+    const storageKey = 'dorm_ultimate_v5';
+    let savedData = JSON.parse(localStorage.getItem(storageKey)) || {};
+    let lastAbsList = "", lastWkdList = "";
 
-    function login() {
-        if(document.getElementById('p').value === "9564") {
-            document.getElementById('auth').style.display = 'none';
-            document.getElementById('main').style.display = 'block';
+    // Проверка логина
+    if(localStorage.getItem('dorm_authed_v5') === 'true') {
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        render();
+    }
+
+    function checkPin() {
+        if (document.getElementById('pinInput').value === SECRET_PIN) {
+            localStorage.setItem('dorm_authed_v5', 'true');
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
             render();
-        }
+        } else alert('❌');
     }
 
     function save(id, val) {
-        state[id] = val;
-        localStorage.setItem('dorm_final_v1', JSON.stringify(state));
+        savedData[id] = val;
+        localStorage.setItem(storageKey, JSON.stringify(savedData));
     }
 
     function render() {
         const list = document.getElementById('list');
         list.innerHTML = '';
-        roomsData.forEach(room => {
-            const isE = state[`e_${room.r}`] || false;
-            const card = document.createElement('div');
-            card.className = 'card';
-            if(isE) card.style.opacity = '0.5';
+        data.forEach(item => {
+            const isEmpty = savedData[`empty_${item.room}`] || false;
+            const roomDiv = document.createElement('div');
+            roomDiv.className = `room-block glass-panel ${isEmpty ? 'empty-room' : ''}`;
+            
+            let resHtml = '';
+            item.names.forEach(name => {
+                const idP = `p_${item.room}_${name}`, idW = `w_${item.room}_${name}`;
+                const isP = isEmpty ? false : (savedData[idP] !== undefined ? savedData[idP] : true);
+                const isW = savedData[idW] || false;
 
-            let rows = '';
-            room.n.forEach(name => {
-                const idP = `p_${room.r}_${name}`;
-                const idW = `w_${room.r}_${name}`;
-                const checkP = state[idP] !== undefined ? state[idP] : true;
-                const checkW = state[idW] || false;
-
-                rows += `
-                <div class="row">
-                    <span class="name">${name}</span>
-                    <div class="checks">
-                        <label>🏠<input type="checkbox" onchange="save('${idP}', this.checked)" ${checkP?'checked':''} ${isE?'disabled':''}></label>
-                        <label>📅<input type="checkbox" onchange="save('${idW}', this.checked)" ${checkW?'checked':''}></label>
-                    </div>
-                </div>`;
+                resHtml += `
+                    <div class="resident">
+                        <span class="res-name" style="${isEmpty ? 'opacity:0.3' : ''}">${name}</span>
+                        <div class="check-group">
+                            <label>🏠<input type="checkbox" onchange="save('${idP}', this.checked)" ${isP?'checked':''} ${isEmpty?'disabled':''}></label>
+                            <label>📅<input type="checkbox" onchange="save('${idW}', this.checked)" ${isW?'checked':''}></label>
+                        </div>
+                    </div>`;
             });
 
-            card.innerHTML = `
-                <div class="header" onclick="this.parentElement.classList.toggle('open')">
-                    <span class="title">Комната ${room.r}</span>
+            roomDiv.innerHTML = `
+                <div class="room-header" onclick="toggleRoom(this)">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="room-title">Комната ${item.room}</span>
+                        <span class="arrow">▼</span>
+                    </div>
                     <label class="empty-toggle" onclick="event.stopPropagation()">
-                        Пусто <input type="checkbox" onchange="save('e_${room.r}', this.checked);render()" ${isE?'checked':''}>
+                        Пусто <input type="checkbox" onchange="save('empty_${item.room}', this.checked);render()" ${isEmpty?'checked':''}>
                     </label>
                 </div>
-                <div class="content">${rows}</div>
-            `;
-            list.appendChild(card);
+                <div class="room-content-wrapper">
+                    <div class="room-content">${resHtml}</div>
+                </div>`;
+            list.appendChild(roomDiv);
         });
     }
 
-    function showReport() {
-        let present = 0, abs = [], wkd = [];
-        roomsData.forEach(r => {
-            if(state[`e_${r.r}`]) abs.push(`• В ${r.r} никого нет`);
+    function toggleRoom(header) {
+        const wrapper = header.nextElementSibling;
+        const arrow = header.querySelector('.arrow');
+        const isOpen = wrapper.classList.toggle('open');
+        arrow.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    function openReport() {
+        let total = 0, absent = [], wkd = [];
+        data.forEach(g => {
+            if (savedData[`empty_${g.room}`]) absent.push(`• В ${g.room} никого нет`);
             else {
-                let localAbs = [];
-                r.n.forEach(n => {
-                    if(state[`p_${r.r}_${n}`] !== false) present++;
-                    else localAbs.push(n.split(' ')[0]);
+                let rAbs = [];
+                g.names.forEach(n => {
+                    if (savedData[`p_${g.room}_${n}`] !== false) total++;
+                    else rAbs.push(n.split(' ')[0]);
                 });
-                if(localAbs.length) abs.push(`• ${localAbs.join(', ')} (${r.r})`);
+                if (rAbs.length) absent.push(`• ${rAbs.join(', ')} (${g.room})`);
             }
-            r.n.forEach(n => { if(state[`w_${r.r}_${n}`]) wkd.push(`${n.split(' ')[0]} (${r.r})`); });
+            g.names.forEach(n => { if (savedData[`w_${g.room}_${n}`]) wkd.push(`${n.split(' ')[0]} (${g.room})`); });
         });
 
-        lastAbs = abs.join('\n');
-        lastWkd = wkd.join(', ');
+        lastAbsList = absent.join('\n');
+        lastWkdList = wkd.join(', ');
 
-        document.getElementById('out').innerText = `ИТОГ: ${present} чел.\n\nОТСУТСТВУЮТ:\n${lastAbs || 'Все на месте'}\n\nНА ВЫХОДНЫЕ:\n${lastWkd || 'Никого'}`;
-        document.getElementById('overlay').style.display = 'flex';
+        document.getElementById('reportOutput').innerText = `📊 ИТОГ: ${total} чел.\n\n❌ ОТСУТСТВУЮТ:\n${lastAbsList || 'Все на месте'}\n\n📅 НА ВЫХОДНЫЕ:\n${lastWkdList || 'Никого'}`;
+        const s = document.getElementById('reportScreen');
+        s.style.display = 'flex';
+        setTimeout(() => s.classList.add('active'), 10);
+    }
+
+    function closeModal() {
+        const s = document.getElementById('reportScreen');
+        s.classList.remove('active');
+        setTimeout(() => s.style.display = 'none', 450);
     }
 
     function copyAbs() {
-        navigator.clipboard.writeText(lastAbs || "Все на месте");
-        alert('Отсутствующие скопированы!');
+        navigator.clipboard.writeText(lastAbsList || "Все на месте");
+        alert('Отсутствующие скопированы! ✅');
     }
 
     function copyWkd() {
-        navigator.clipboard.writeText(lastWkd || "Никого");
-        alert('Выходные скопированы!');
+        navigator.clipboard.writeText(lastWkdList || "Никого");
+        alert('Выходные скопированы! ✅');
+    }
+
+    function resetAllData() {
+        if (confirm("Вы точно хотите сбросить все отметки?")) {
+            localStorage.removeItem(storageKey);
+            location.reload();
+        }
     }
 </script>
 </body>
