@@ -9,7 +9,7 @@
             --bg: #f2f2f7;
             --glass: rgba(255, 255, 255, 0.7);
             --glass-border: rgba(255, 255, 255, 0.4);
-            --glow: rgba(255, 255, 255, 0.3); /* Цвет свечения для светлой темы */
+            --glow: rgba(255, 255, 255, 0.3);
             --accent: #007aff;
             --danger: #ff3b30;
             --text: #1c1c1e;
@@ -20,8 +20,8 @@
             :root {
                 --bg: #000000;
                 --glass: rgba(28, 28, 30, 0.8);
-                --glass-border: rgba(255, 255, 255, 0.15);
-                --glow: rgba(255, 255, 255, 0.1); /* Мягкое рассеянное свечение */
+                --glass-border: rgba(255, 255, 255, 0.12);
+                --glow: rgba(255, 255, 255, 0.08); /* Рассеянное свечение */
                 --accent: #0a84ff;
                 --danger: #ff453a;
                 --text: #ffffff;
@@ -29,60 +29,79 @@
             }
         }
 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body { 
             font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
             background: var(--bg); color: var(--text);
             margin: 0; 
             padding: 20px 20px calc(130px + env(safe-area-inset-bottom)) 20px;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* Эффект Liquid Glass с рассеянной обводкой */
+        /* Оптимизированный Liquid Glass с мягким свечением */
         .glass-panel {
             background: var(--glass);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid var(--glass-border);
             border-radius: 22px;
-            
-            /* Рассеянная обводка через box-shadow */
-            box-shadow: 
-                0 0 20px 2px var(--glow), 
-                0 8px 32px 0 rgba(0, 0, 0, 0.2);
-            
+            box-shadow: 0 0 15px 2px var(--glow), 0 10px 30px rgba(0,0,0,0.1);
             transform: translateZ(0);
-            will-change: transform, opacity;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            contain: paint; /* Оптимизация отрисовки теней */
         }
 
-        .room-block { margin-bottom: 16px; }
-        .room-block.empty-room { border-color: var(--danger); opacity: 0.6; transform: scale(0.98); box-shadow: none; }
+        .room-block { margin-bottom: 16px; transition: transform 0.2s ease; }
+        .room-block.empty-room { opacity: 0.5; transform: scale(0.97); box-shadow: none; border-color: var(--danger); }
 
-        .room-header { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .room-header { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .room-title { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
-        
-        .arrow { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: var(--secondary); font-size: 12px; }
+        .arrow { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); color: var(--secondary); font-size: 10px; }
 
-        .empty-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--danger); font-weight: 600; }
+        .empty-toggle { display: flex; align-items: center; gap: 8px; color: var(--danger); font-weight: 600; font-size: 13px; }
         .empty-toggle input { width: 22px; height: 22px; accent-color: var(--danger); }
 
-        .room-content { 
-            display: none; opacity: 0; transform: translateY(-10px); 
-            padding: 0 20px 20px 20px;
-            border-top: 1px solid var(--glass-border);
-            transition: opacity 0.2s ease, transform 0.2s ease;
+        /* ИДЕАЛЬНО ПЛАВНАЯ АНИМАЦИЯ (CSS Grid Trick) */
+        .room-content-wrapper {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
         }
-        .room-content.open { display: block; opacity: 1; transform: translateY(0); }
+        .room-content-wrapper.open { grid-template-rows: 1fr; }
 
-        .resident { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 0.5px solid var(--glass-border); }
+        .room-content { 
+            min-height: 0; 
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            padding: 0 20px 20px 20px;
+        }
+        .room-content-wrapper.open .room-content { opacity: 1; transform: translateY(0); border-top: 1px solid var(--glass-border); padding-top: 10px; }
+
+        .resident { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 0.5px solid var(--glass-border); }
         .resident:last-child { border-bottom: none; }
 
-        /* Чекбоксы в одну строку */
-        .check-group { display: flex; gap: 15px; }
+        /* Чекбоксы в ряд */
+        .check-group { display: flex; gap: 14px; }
         .check-group label { display: flex; align-items: center; gap: 6px; font-size: 18px; }
         input[type="checkbox"] { width: 24px; height: 24px; border-radius: 8px; accent-color: var(--accent); }
 
-        /* Нижняя панель */
+        /* Исправленный экран входа */
+        #authScreen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+            height: 100dvh; /* Используем dynamic vh для фикса "съезда" кнопок */
+        }
+        .auth-card { width: 290px; padding: 35px 25px; text-align: center; }
+
+        .pin-field {
+            width: 100%; font-size: 28px; background: rgba(255,255,255,0.05); 
+            border: 2px solid var(--accent); border-radius: 18px; padding: 12px; 
+            color: var(--text); text-align: center; margin: 20px 0; outline: none;
+        }
+
+        /* Нижняя панель управления */
         .main-controls { 
             position: fixed; bottom: 0; left: 0; right: 0;
             background: var(--glass);
@@ -96,11 +115,12 @@
         .btn-main { 
             width: 100%; background: var(--accent); color: white; padding: 18px; 
             border-radius: 20px; border: none; font-size: 17px; font-weight: 700; 
-            box-shadow: 0 10px 20px rgba(0, 122, 255, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.2);
+            transition: transform 0.2s;
         }
-        .btn-main:active { transform: scale(0.97); opacity: 0.9; }
+        .btn-main:active { transform: scale(0.96); opacity: 0.9; }
 
-        /* Модалка отчета */
+        /* Отчет (модалка) */
         #reportScreen {
             position: fixed; inset: 0; background: rgba(0,0,0,0.3); 
             backdrop-filter: blur(10px); z-index: 99999; 
@@ -117,27 +137,26 @@
         #reportScreen.active .report-modal { transform: translateY(0); }
 
         .report-box { 
-            font-size: 16px; background: rgba(255,255,255,0.05); 
-            padding: 20px; border-radius: 20px; margin-bottom: 20px; 
-            border: 1px solid var(--glass-border); white-space: pre-wrap;
+            font-size: 16px; background: rgba(255,255,255,0.05); padding: 20px; 
+            border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--glass-border); white-space: pre-wrap;
         }
         
         .copy-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-        .btn-copy { padding: 16px; border-radius: 16px; font-weight: 700; border: none; }
+        .btn-copy { padding: 16px; border-radius: 16px; font-weight: 700; border: none; font-size: 14px; }
         .copy-blue { background: var(--accent); color: white; }
         .copy-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
 
         #mainContent { display: none; }
-        h2 { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin-bottom: 25px; }
+        h2 { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin-bottom: 25px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="authScreen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; position:fixed; inset:0; background:var(--bg); z-index:9999;">
-        <div class="glass-panel" style="padding: 40px; text-align: center; width: 280px;">
-            <h2 style="font-size: 24px; margin-bottom:15px;">🔐 Доступ</h2>
-            <input type="password" id="pinInput" style="width: 100%; font-size: 24px; background: none; border: 2px solid var(--accent); border-radius: 15px; padding: 10px; color: var(--text); text-align: center; outline:none;" inputmode="numeric" maxlength="4" placeholder="••••">
-            <button class="btn-main" style="margin-top: 20px;" onclick="checkPin()">Войти</button>
+    <div id="authScreen">
+        <div class="glass-panel auth-card">
+            <h2 style="font-size: 24px; margin: 0;">🔒 Вход</h2>
+            <input type="password" id="pinInput" class="pin-field" inputmode="numeric" maxlength="4" placeholder="••••">
+            <button class="btn-main" onclick="checkPin()">Войти</button>
         </div>
     </div>
 
@@ -151,15 +170,15 @@
 
     <div id="reportScreen" onclick="if(event.target==this)closeReport()">
         <div class="report-modal">
-            <div style="width: 40px; height: 5px; background: var(--secondary); border-radius: 5px; margin: -15px auto 20px auto; opacity: 0.5;"></div>
-            <h3 style="text-align:center; margin-bottom: 20px;">Отчет готов</h3>
+            <div style="width: 40px; height: 5px; background: var(--secondary); border-radius: 5px; margin: -15px auto 20px auto; opacity: 0.3;"></div>
+            <h3 style="text-align:center; margin-bottom: 20px;">Отчет сформирован</h3>
             <div id="reportOutput" class="report-box"></div>
             <div class="copy-row">
                 <button class="btn-copy copy-blue" onclick="copyPart('main')">Итог</button>
                 <button class="btn-copy copy-outline" onclick="copyPart('weekend')">Выходные</button>
             </div>
             <button class="btn-main" style="background: var(--bg); color: var(--text); box-shadow: none;" onclick="closeReport()">Закрыть</button>
-            <button style="width: 100%; background: none; border: none; color: var(--danger); margin-top: 20px; font-weight: 600;" onclick="resetAll()">Сбросить данные</button>
+            <button style="width: 100%; background: none; border: none; color: var(--danger); margin-top: 20px; font-weight: 600;" onclick="resetAll()">Сбросить всё</button>
         </div>
     </div>
 
@@ -183,7 +202,7 @@
 
     const storageKey = 'dorm_v_final';
     let savedData = JSON.parse(localStorage.getItem(storageKey)) || {};
-    let reportMain = "", reportWeekend = "";
+    let rMain = "", rWeekend = "";
 
     if (localStorage.getItem('dorm_auth') === 'true') unlockApp();
 
@@ -191,7 +210,10 @@
         if (document.getElementById('pinInput').value === SECRET_PIN) {
             localStorage.setItem('dorm_auth', 'true');
             unlockApp();
-        } else alert('❌');
+        } else {
+            alert('Неверный код');
+            document.getElementById('pinInput').value = '';
+        }
     }
 
     function unlockApp() {
@@ -216,7 +238,7 @@
 
                 resHtml += `
                     <div class="resident">
-                        <span class="res-name" style="${isEmpty ? 'opacity:0.4' : ''}">${name}</span>
+                        <span class="res-name">${name}</span>
                         <div class="check-group">
                             <label><input type="checkbox" onchange="save('${idP}', this.checked)" ${isP?'checked':''} ${isEmpty?'disabled':''}>🏠</label>
                             <label><input type="checkbox" onchange="save('${idW}', this.checked)" ${isW?'checked':''}>📅</label>
@@ -225,32 +247,28 @@
             });
 
             roomDiv.innerHTML = `
-                <div class="room-header">
-                    <div class="room-info" onclick="toggleRoom(this)" style="flex-grow:1; cursor:pointer;">
+                <div class="room-header" onclick="toggleRoom(this)">
+                    <div style="display:flex; align-items:center; gap:12px;">
                         <span class="room-title">Комната ${item.room}</span>
                         <span class="arrow">▼</span>
                     </div>
-                    <label class="empty-toggle">
+                    <label class="empty-toggle" onclick="event.stopPropagation()">
                         <span>Пусто</span>
                         <input type="checkbox" onchange="setEmpty('${item.room}', this.checked)" ${isEmpty?'checked':''}>
                     </label>
                 </div>
-                <div class="room-content">${resHtml}</div>`;
+                <div class="room-content-wrapper">
+                    <div class="room-content">${resHtml}</div>
+                </div>`;
             app.appendChild(roomDiv);
         });
     }
 
-    function toggleRoom(el) {
-        const content = el.parentElement.nextElementSibling;
-        const arrow = el.querySelector('.arrow');
-        if (content.classList.contains('open')) {
-            content.style.opacity = '0';
-            content.style.transform = 'translateY(-10px)';
-            setTimeout(() => { content.classList.remove('open'); arrow.style.transform = 'rotate(0deg)'; }, 200);
-        } else {
-            content.classList.add('open');
-            setTimeout(() => { content.style.opacity = '1'; content.style.transform = 'translateY(0)'; arrow.style.transform = 'rotate(180deg)'; }, 10);
-        }
+    function toggleRoom(header) {
+        const wrapper = header.nextElementSibling;
+        const arrow = header.querySelector('.arrow');
+        const isOpen = wrapper.classList.toggle('open');
+        arrow.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
     }
 
     function setEmpty(room, val) {
@@ -265,7 +283,7 @@
     }
 
     function openReport() {
-        let total = 0, absent = [], weekend = [];
+        let total = 0, absent = [], wkd = [];
         data.forEach(g => {
             if (savedData[`empty_${g.room}`]) absent.push(`• В ${g.room} никого нет`);
             else {
@@ -276,22 +294,24 @@
                 });
                 if (rAbs.length) absent.push(`• ${rAbs.join(', ')} (${g.room})`);
             }
-            g.names.forEach(n => { if (savedData[`w_${g.room}_${n}`]) weekend.push(`${n.split(' ')[0]} (${g.room})`); });
+            g.names.forEach(n => { if (savedData[`w_${g.room}_${n}`]) wkd.push(`${n.split(' ')[0]} (${g.room})`); });
         });
 
-        reportMain = `ИТОГ: ${total} чел.\n\nОТСУТСТВУЮТ:\n${absent.length ? absent.join('\n') : 'Все на месте'}`;
-        reportWeekend = weekend.length ? `НА ВЫХОДНЫЕ:\n${weekend.join(', ')}` : "Никого нет";
+        rMain = `ИТОГ: ${total} чел.\n\nОТСУТСТВУЮТ:\n${absent.length ? absent.join('\n') : 'Все на месте'}`;
+        rWeekend = wkd.length ? `НА ВЫХОДНЫЕ:\n${wkd.join(', ')}` : "Никого нет";
 
-        document.getElementById('reportOutput').innerText = reportMain + (weekend.length ? `\n\n${reportWeekend}` : "");
+        document.getElementById('reportOutput').innerText = rMain + (wkd.length ? `\n\n${rWeekend}` : "");
         const s = document.getElementById('reportScreen');
         s.style.display = 'flex';
         setTimeout(() => s.classList.add('active'), 10);
     }
 
-    function copyPart(type) {
-        const text = (type === 'main') ? reportMain : reportWeekend;
+    function copyPart(t) {
+        const text = (t === 'main') ? rMain : rWeekend;
         const clean = text.replace(/[🏠📅•]/g, '').trim();
-        navigator.clipboard.writeText(clean).then(() => alert('Скопировано! ✅'));
+        navigator.clipboard.writeText(clean).then(() => {
+            alert('Скопировано! ✅');
+        });
     }
 
     function closeReport() {
@@ -301,7 +321,7 @@
     }
 
     function resetAll() {
-        if (confirm("Сбросить?")) { localStorage.removeItem(storageKey); location.reload(); }
+        if (confirm("Сбросить все данные?")) { localStorage.clear(); location.reload(); }
     }
 </script>
 </body>
