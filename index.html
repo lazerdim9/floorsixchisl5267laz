@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Учет этажа Liquid</title>
+    <title>Учет этажа PRO</title>
     <style>
         :root {
             --bg: #f2f2f7;
@@ -13,13 +13,12 @@
             --danger: #ff3b30;
             --text: #1c1c1e;
             --secondary: #8e8e93;
-            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg: #000000;
-                --glass: rgba(28, 28, 30, 0.75);
+                --glass: rgba(28, 28, 30, 0.8);
                 --glass-border: rgba(255, 255, 255, 0.1);
                 --accent: #0a84ff;
                 --danger: #ff453a;
@@ -32,64 +31,71 @@
             font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
             background: var(--bg); color: var(--text);
             margin: 0; 
-            /* Добавляем нижний отступ, чтобы контент не перекрывался панелью */
-            padding: 20px 20px calc(120px + env(safe-area-inset-bottom)) 20px;
+            padding: 20px 20px calc(130px + env(safe-area-inset-bottom)) 20px;
             -webkit-tap-highlight-color: transparent;
+            /* Плавный скролл */
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* Эффект Liquid Glass для блоков */
+        /* Оптимизация для GPU */
         .glass-panel {
             background: var(--glass);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
-            box-shadow: var(--card-shadow);
+            transform: translateZ(0); /* Аппаратное ускорение */
+            will-change: transform, opacity;
         }
 
-        .room-block { margin-bottom: 14px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .room-block { margin-bottom: 14px; transition: opacity 0.3s ease, transform 0.3s ease; }
         .room-block.empty-room { border-color: var(--danger); opacity: 0.6; transform: scale(0.98); }
 
         .room-header { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; }
         .room-title { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
         
-        .arrow { transition: transform 0.4s ease; color: var(--secondary); }
+        .arrow { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: var(--secondary); }
 
         .empty-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--danger); font-weight: 600; }
         .empty-toggle input { width: 22px; height: 22px; accent-color: var(--danger); }
 
+        /* Оптимизированная анимация без max-height */
         .room-content { 
-            max-height: 0; opacity: 0; transition: all 0.4s ease; padding: 0 20px; overflow: hidden;
+            display: none; 
+            opacity: 0; 
+            transform: translateY(-10px); 
+            padding: 0 20px 20px 20px;
+            border-top: 1px solid var(--glass-border);
+            transition: opacity 0.2s ease, transform 0.2s ease;
         }
-        .room-content.open { max-height: 600px; opacity: 1; padding: 10px 20px 20px 20px; border-top: 1px solid var(--glass-border); }
+        .room-content.open { display: block; opacity: 1; transform: translateY(0); }
 
         .resident { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 0.5px solid var(--glass-border); }
         .resident:last-child { border-bottom: none; }
 
-        /* Чекбоксы */
         input[type="checkbox"] { width: 28px; height: 28px; border-radius: 10px; accent-color: var(--accent); }
 
-        /* Фикс нижней панели (Safe Area) */
+        /* Фикс Safe Area для нижней панели */
         .main-controls { 
             position: fixed; bottom: 0; left: 0; right: 0;
             background: var(--glass);
             backdrop-filter: blur(25px) saturate(200%);
             -webkit-backdrop-filter: blur(25px) saturate(200%);
-            /* Используем env для правильного отступа на безрамочных iPhone */
-            padding: 15px 20px calc(15px + env(safe-area-inset-bottom)) 20px;
+            padding: 15px 20px calc(20px + env(safe-area-inset-bottom)) 20px;
             border-top: 1px solid var(--glass-border);
             z-index: 1000;
+            transform: translateZ(0);
         }
 
         .btn-main { 
             width: 100%; background: var(--accent); color: white; padding: 18px; 
             border-radius: 20px; border: none; font-size: 17px; font-weight: 700; 
             box-shadow: 0 10px 20px rgba(0, 122, 255, 0.3);
-            transition: transform 0.2s;
+            transition: transform 0.2s, opacity 0.2s;
         }
-        .btn-main:active { transform: scale(0.97); }
+        .btn-main:active { transform: scale(0.96); opacity: 0.8; }
 
-        /* Модалка отчета */
+        /* Отчет */
         #reportScreen {
             position: fixed; inset: 0; background: rgba(0,0,0,0.3); 
             backdrop-filter: blur(10px); z-index: 99999; 
@@ -101,32 +107,34 @@
             -webkit-backdrop-filter: blur(30px);
             border-radius: 35px 35px 0 0; 
             padding: 30px 25px calc(30px + env(safe-area-inset-bottom)) 25px;
-            transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.1);
+            transform: translateY(100%); 
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            will-change: transform;
         }
         #reportScreen.active .report-modal { transform: translateY(0); }
 
         .report-box { 
             font-size: 16px; background: rgba(255,255,255,0.05); 
             padding: 20px; border-radius: 20px; margin-bottom: 20px; 
-            border: 1px solid var(--glass-border);
+            border: 1px solid var(--glass-border); white-space: pre-wrap;
         }
         
         .copy-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-        .btn-copy { padding: 16px; border-radius: 16px; font-weight: 700; border: none; font-size: 14px; }
+        .btn-copy { padding: 16px; border-radius: 16px; font-weight: 700; border: none; font-size: 14px; transition: 0.2s; }
         .copy-blue { background: var(--accent); color: white; }
         .copy-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
+        .btn-copy:active { transform: scale(0.95); }
 
         #mainContent { display: none; }
-        
         h2 { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin-bottom: 25px; }
     </style>
 </head>
 <body>
 
-    <div id="authScreen">
+    <div id="authScreen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; position:fixed; inset:0; background:var(--bg); z-index:9999;">
         <div class="glass-panel" style="padding: 40px; text-align: center; width: 280px;">
-            <h2 style="font-size: 24px;">🔐 Доступ</h2>
-            <input type="password" id="pinInput" class="pin-input" style="width: 100%; font-size: 24px; background: none; border: 2px solid var(--accent); border-radius: 15px; padding: 10px; color: var(--text); text-align: center;" inputmode="numeric" maxlength="4">
+            <h2 style="font-size: 24px; margin-bottom:15px;">🔐 Доступ</h2>
+            <input type="password" id="pinInput" style="width: 100%; font-size: 24px; background: none; border: 2px solid var(--accent); border-radius: 15px; padding: 10px; color: var(--text); text-align: center; outline:none;" inputmode="numeric" maxlength="4" placeholder="••••">
             <button class="btn-main" style="margin-top: 20px;" onclick="checkPin()">Войти</button>
         </div>
     </div>
@@ -142,14 +150,14 @@
     <div id="reportScreen" onclick="if(event.target==this)closeReport()">
         <div class="report-modal">
             <div style="width: 40px; height: 5px; background: var(--secondary); border-radius: 5px; margin: -15px auto 20px auto; opacity: 0.5;"></div>
-            <h3 style="text-align:center; margin-bottom: 20px;">Отчет готов</h3>
+            <h3 style="text-align:center; margin-bottom: 20px;">Отчет сформирован</h3>
             <div id="reportOutput" class="report-box"></div>
             
             <div class="copy-row">
                 <button class="btn-copy copy-blue" onclick="copyPart('main')">Итог</button>
                 <button class="btn-copy copy-outline" onclick="copyPart('weekend')">Выходные</button>
             </div>
-            <button class="btn-main" style="background: var(--bg); color: var(--text); box-shadow: none;" onclick="closeReport()">Закрыть</button>
+            <button class="btn-main" style="background: var(--bg); color: var(--text); box-shadow: none;" onclick="closeReport()">Назад</button>
             <button style="width: 100%; background: none; border: none; color: var(--danger); margin-top: 20px; font-weight: 600;" onclick="resetAll()">Сбросить всё</button>
         </div>
     </div>
@@ -172,9 +180,9 @@
         { room: "600", names: ["Грязнов С.", "Андрианов Э."] }
     ];
 
-    const storageKey = 'dorm_v_liquid';
+    const storageKey = 'dorm_v_final';
     let savedData = JSON.parse(localStorage.getItem(storageKey)) || {};
-    let lastMain = "", lastWeekend = "";
+    let reportTextMain = "", reportTextWeekend = "";
 
     if (localStorage.getItem('dorm_auth') === 'true') unlockApp();
 
@@ -182,7 +190,7 @@
         if (document.getElementById('pinInput').value === SECRET_PIN) {
             localStorage.setItem('dorm_auth', 'true');
             unlockApp();
-        } else alert('❌');
+        } else alert('Неверный PIN');
     }
 
     function unlockApp() {
@@ -207,17 +215,21 @@
 
                 resHtml += `
                     <div class="resident">
-                        <span class="res-name" style="${isEmpty ? 'opacity:0.5' : ''}">${name}</span>
+                        <span class="res-name" style="${isEmpty ? 'opacity:0.4' : ''}">${name}</span>
                         <div class="check-group">
-                            <label><input type="checkbox" onchange="save('${idP}', this.checked)" ${isP?'checked':''} ${isEmpty?'disabled':''}>🏠</label>
-                            <label><input type="checkbox" onchange="save('${idW}', this.checked)" ${isW?'checked':''}>📅</label>
+                            <label style="display:flex; flex-direction:column; align-items:center; font-size:10px; gap:4px; color:var(--secondary)">
+                                <input type="checkbox" onchange="save('${idP}', this.checked)" ${isP?'checked':''} ${isEmpty?'disabled':''}>🏠
+                            </label>
+                            <label style="display:flex; flex-direction:column; align-items:center; font-size:10px; gap:4px; color:var(--secondary)">
+                                <input type="checkbox" onchange="save('${idW}', this.checked)" ${isW?'checked':''}>📅
+                            </label>
                         </div>
                     </div>`;
             });
 
             roomDiv.innerHTML = `
                 <div class="room-header">
-                    <div class="room-info" onclick="toggleRoom(this)">
+                    <div class="room-info" onclick="toggleRoom(this)" style="display:flex; align-items:center; gap:12px; flex-grow:1; cursor:pointer;">
                         <span class="room-title">Комната ${item.room}</span>
                         <span class="arrow">▼</span>
                     </div>
@@ -234,8 +246,22 @@
     function toggleRoom(el) {
         const content = el.parentElement.nextElementSibling;
         const arrow = el.querySelector('.arrow');
-        content.classList.toggle('open');
-        arrow.style.transform = content.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+        
+        if (content.classList.contains('open')) {
+            content.style.opacity = '0';
+            content.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                content.classList.remove('open');
+                arrow.style.transform = 'rotate(0deg)';
+            }, 200);
+        } else {
+            content.classList.add('open');
+            setTimeout(() => {
+                content.style.opacity = '1';
+                content.style.transform = 'translateY(0)';
+                arrow.style.transform = 'rotate(180deg)';
+            }, 10);
+        }
     }
 
     function setEmpty(room, val) {
@@ -267,30 +293,36 @@
             });
         });
 
-        lastMain = `ИТОГ: ${total} чел.\n\nОТСУТСТВУЮТ:\n${absent.length ? absent.join('\n') : 'Все на месте'}`;
-        lastWeekend = weekend.length ? `НА ВЫХОДНЫЕ:\n${weekend.join(', ')}` : "Никого нет";
+        reportTextMain = `ИТОГ: ${total} чел.\n\nОТСУТСТВУЮТ:\n${absent.length ? absent.join('\n') : 'Все на месте'}`;
+        reportTextWeekend = weekend.length ? `НА ВЫХОДНЫЕ:\n${weekend.join(', ')}` : "На выходные никого нет";
 
-        document.getElementById('reportOutput').innerText = lastMain + (weekend.length ? `\n\n${lastWeekend}` : "");
+        document.getElementById('reportOutput').innerText = reportTextMain + (weekend.length ? `\n\n${reportTextWeekend}` : "");
         const screen = document.getElementById('reportScreen');
         screen.style.display = 'flex';
         setTimeout(() => screen.classList.add('active'), 10);
     }
 
     function copyPart(type) {
-        const text = (type === 'main') ? lastMain : lastWeekend;
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Скопировано! ✅');
+        const text = (type === 'main') ? reportTextMain : reportTextWeekend;
+        // Очистка от смайликов перед копированием
+        const cleanText = text.replace(/[🏠📅📊❌•]/g, '').trim();
+        
+        navigator.clipboard.writeText(cleanText).then(() => {
+            const btn = document.querySelector(type === 'main' ? '.copy-blue' : '.copy-outline');
+            const originalText = btn.innerText;
+            btn.innerText = '✅ Готово';
+            setTimeout(() => btn.innerText = originalText, 1500);
         });
     }
 
     function closeReport() {
         const screen = document.getElementById('reportScreen');
         screen.classList.remove('active');
-        setTimeout(() => screen.style.display = 'none', 500);
+        setTimeout(() => screen.style.display = 'none', 450);
     }
 
     function resetAll() {
-        if (confirm("Сбросить данные?")) {
+        if (confirm("Сбросить все данные для нового обхода?")) {
             localStorage.removeItem(storageKey);
             location.reload();
         }
