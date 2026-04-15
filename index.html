@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Учет этажа - Max Performance</title>
+    <title>Учет этажа - Smooth CSS</title>
     <style>
         :root {
             --bg: #f2f2f7;
-            /* Имитируем стекло без тяжелого фильтра blur */
-            --glass: #ffffff; 
-            --glass-border: rgba(0, 0, 0, 0.05);
-            --glow: rgba(0, 0, 0, 0.04); 
+            --glass: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glow: rgba(0, 0, 0, 0.05);
             --accent: #007aff;
             --danger: #ff3b30;
             --text: #1c1c1e;
@@ -20,10 +19,9 @@
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg: #000000;
-                /* Цвет карточки в темной теме */
-                --glass: #1c1c1e; 
-                --glass-border: rgba(255, 255, 255, 0.08);
-                --glow: rgba(255, 255, 255, 0.03); 
+                --glass: rgba(28, 28, 30, 0.8);
+                --glass-border: rgba(255, 255, 255, 0.12);
+                --glow: rgba(10, 132, 255, 0.15);
                 --accent: #0a84ff;
                 --danger: #ff453a;
                 --text: #ffffff;
@@ -44,13 +42,15 @@
         #mainContent { width: 100%; max-width: 480px; display: none; }
         #app { width: 100%; }
 
-        /* Облегченная панель: без тяжелых blur-фильтров */
+        /* Возвращаем красивое стекло */
         .glass-panel {
             background: var(--glass);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
-            box-shadow: 0 6px 20px var(--glow), 0 2px 8px rgba(0,0,0,0.05);
-            transform: translateZ(0); /* Включает аппаратное ускорение слоя */
+            box-shadow: 0 8px 24px var(--glow);
+            transform: translateZ(0); /* Аппаратное ускорение */
         }
 
         .room-block { 
@@ -59,13 +59,13 @@
         }
         
         .room-header { 
-            padding: 10px 16px; 
+            padding: 12px 16px; 
             display: flex; justify-content: space-between; align-items: center; 
             cursor: pointer;
         }
         
         .room-title { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; }
-        .arrow { transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1); color: var(--secondary); font-size: 9px; }
+        .arrow { transition: transform 0.3s ease; color: var(--secondary); font-size: 10px; }
 
         .empty-toggle { 
             display: flex; align-items: center; gap: 6px; 
@@ -73,26 +73,29 @@
         }
         .empty-toggle input { width: 20px; height: 20px; accent-color: var(--danger); }
 
-        /* НОВЫЙ ПОДХОД К АНИМАЦИИ ВЫСОТЫ */
+        /* ИДЕАЛЬНАЯ АНИМАЦИЯ: через max-height */
         .room-content-wrapper {
-            height: 0px; /* Жесткий ноль */
+            max-height: 0;
             overflow: hidden;
-            transition: height 0.35s cubic-bezier(0.33, 1, 0.68, 1);
-            will-change: height; /* Заранее готовим видеокарту к анимации */
-        }
-
-        /* Сам контент внутри враппера */
-        .room-content { 
-            padding: 0 16px 12px 16px;
-            opacity: 0;
-            transition: opacity 0.2s ease-out;
-            border-top: 1px solid transparent;
+            transition: max-height 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
         
-        .room-content-wrapper.open .room-content { 
-            opacity: 1; 
-            border-top-color: var(--glass-border); 
-            padding-top: 8px;
+        .room-content-wrapper.open {
+            max-height: 400px; /* С запасом для 4 человек */
+        }
+
+        /* Контент внутри, чтобы не ломать анимацию отступами */
+        .room-inner {
+            padding: 4px 16px 14px 16px;
+            border-top: 1px solid var(--glass-border);
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .room-content-wrapper.open .room-inner {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .resident { 
@@ -113,22 +116,19 @@
             position: fixed; inset: 0; background: var(--bg); z-index: 9999; height: 100dvh;
         }
         .auth-card { width: 280px; padding: 30px; text-align: center; }
-        
         .pin-field {
-            width: 100%; font-size: 28px; background: rgba(100,100,100,0.05); 
+            width: 100%; font-size: 28px; background: rgba(0,0,0,0.05); 
             border: 2px solid var(--accent); border-radius: 16px; padding: 12px; 
-            color: var(--text); text-align: center; margin: 20px 0; outline: none;
-            letter-spacing: 6px;
+            color: var(--text); text-align: center; margin: 20px 0; outline: none; letter-spacing: 6px;
         }
 
-        /* Панель кнопок */
+        /* Нижняя панель */
         .main-controls { 
             position: fixed; bottom: 0; left: 0; right: 0;
             display: flex; justify-content: center;
             background: var(--glass);
-            /* Оставили blur только для нижней панели, так как она не меняет размер */
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
             padding: 12px 16px calc(15px + env(safe-area-inset-bottom)) 16px;
             border-top: 1px solid var(--glass-border);
             z-index: 1000;
@@ -137,21 +137,21 @@
         .btn-main { 
             width: 100%; max-width: 400px; background: var(--accent); color: white; padding: 16px; 
             border-radius: 18px; border: none; font-size: 17px; font-weight: 700; 
-            box-shadow: 0 6px 15px rgba(0, 122, 255, 0.25);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.2);
         }
-        .btn-main:active { opacity: 0.8; }
+        .btn-main:active { transform: scale(0.97); }
 
         h2 { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin: 10px 0 20px 5px; }
         
         #reportScreen {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); 
-            z-index: 99999; display: none; flex-direction: column; justify-content: flex-end;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); 
+            backdrop-filter: blur(10px); z-index: 99999; 
+            display: none; flex-direction: column; justify-content: flex-end;
         }
         .report-modal {
-            background: var(--glass);
-            border-radius: 30px 30px 0 0; 
+            background: var(--glass); border-radius: 30px 30px 0 0; 
             padding: 25px 20px calc(25px + env(safe-area-inset-bottom)) 20px;
-            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+            transform: translateY(100%); transition: transform 0.4s ease-out;
             width: 100%; max-width: 500px; align-self: center;
         }
         #reportScreen.active .report-modal { transform: translateY(0); }
@@ -178,7 +178,7 @@
     <div id="reportScreen" onclick="if(event.target==this)closeReport()">
         <div class="report-modal">
             <div style="width: 35px; height: 5px; background: var(--secondary); border-radius: 10px; margin: -10px auto 20px auto; opacity: 0.3;"></div>
-            <div id="reportOutput" style="font-size:15px; background:rgba(100,100,100,0.1); padding:15px; border-radius:15px; margin-bottom:15px; white-space:pre-wrap;"></div>
+            <div id="reportOutput" style="font-size:15px; background:rgba(0,0,0,0.03); padding:15px; border-radius:15px; margin-bottom:15px; border:1px solid var(--glass-border); white-space:pre-wrap;"></div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
                 <button class="btn-main" style="padding:12px; font-size:14px;" onclick="copyPart('main')">Копия Итога</button>
                 <button class="btn-main" style="background:transparent; border:2px solid var(--accent); color:var(--accent); box-shadow:none; padding:12px; font-size:14px;" onclick="copyPart('weekend')">Выходные</button>
@@ -206,15 +206,15 @@
         { room: "600", names: ["Грязнов С.", "Андрианов Э."] }
     ];
 
-    const storageKey = 'dorm_super_smooth';
+    const storageKey = 'dorm_maxheight_v1';
     let savedData = JSON.parse(localStorage.getItem(storageKey)) || {};
     let rMain = "", rWeekend = "";
 
-    if (localStorage.getItem('dorm_auth_smooth') === 'true') unlockApp();
+    if (localStorage.getItem('dorm_auth_mh') === 'true') unlockApp();
 
     function checkPin() {
         if (document.getElementById('pinInput').value === SECRET_PIN) {
-            localStorage.setItem('dorm_auth_smooth', 'true');
+            localStorage.setItem('dorm_auth_mh', 'true');
             unlockApp();
         } else {
             alert('❌');
@@ -265,40 +265,18 @@
                     </label>
                 </div>
                 <div class="room-content-wrapper">
-                    <div class="room-content">${resHtml}</div>
+                    <div class="room-inner">${resHtml}</div>
                 </div>`;
             app.appendChild(roomDiv);
         });
     }
 
-    // НОВАЯ JS-АНИМАЦИЯ: Вычисляет высоту до пикселя для идеальной плавности
+    // МАКСИМАЛЬНО ПРОСТАЯ И БЫСТРАЯ ФУНКЦИЯ (только смена класса)
     function toggleRoom(header) {
         const wrapper = header.nextElementSibling;
         const arrow = header.querySelector('.arrow');
-        const content = wrapper.querySelector('.room-content');
-        
-        if (!wrapper.classList.contains('open')) {
-            // Открываем
-            wrapper.classList.add('open');
-            let contentHeight = content.offsetHeight; 
-            wrapper.style.height = contentHeight + 'px';
-            arrow.style.transform = 'rotate(180deg)';
-            
-            // Сбрасываем жесткую высоту после окончания анимации
-            setTimeout(() => { 
-                if (wrapper.classList.contains('open')) wrapper.style.height = 'auto'; 
-            }, 350);
-
-        } else {
-            // Закрываем
-            let contentHeight = content.offsetHeight;
-            wrapper.style.height = contentHeight + 'px'; // Фиксируем высоту
-            wrapper.offsetHeight; // Принудительно заставляем браузер обновить кадр
-            
-            wrapper.style.height = '0px'; // Сворачиваем в 0
-            wrapper.classList.remove('open');
-            arrow.style.transform = 'rotate(0deg)';
-        }
+        const isOpen = wrapper.classList.toggle('open');
+        arrow.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
     }
 
     function setEmpty(room, val) {
@@ -339,17 +317,17 @@
     function copyPart(t) {
         const text = (t === 'main') ? rMain : rWeekend;
         const clean = text.replace(/[🏠📅•]/g, '').trim();
-        navigator.clipboard.writeText(clean).then(() => alert('Скопировано!'));
+        navigator.clipboard.writeText(clean).then(() => alert('Скопировано'));
     }
 
     function closeReport() {
         const s = document.getElementById('reportScreen');
         s.classList.remove('active');
-        setTimeout(() => s.style.display = 'none', 300);
+        setTimeout(() => s.style.display = 'none', 450);
     }
 
     function resetAll() {
-        if (confirm("Точно удалить всё?")) { localStorage.removeItem(storageKey); location.reload(); }
+        if (confirm("Сбросить?")) { localStorage.removeItem(storageKey); location.reload(); }
     }
 </script>
 </body>
