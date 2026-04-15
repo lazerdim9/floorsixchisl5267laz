@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Учет этажа PRO</title>
+    <title>Учет этажа - Light Glow Edition</title>
     <style>
         :root {
             --bg: #f2f2f7;
             --glass: rgba(255, 255, 255, 0.7);
             --glass-border: rgba(255, 255, 255, 0.4);
-            --glow: rgba(255, 255, 255, 0.3);
+            --glow: rgba(255, 255, 255, 0.5); /* Более яркое для светлой темы */
             --accent: #007aff;
             --danger: #ff3b30;
             --text: #1c1c1e;
@@ -21,7 +21,7 @@
                 --bg: #000000;
                 --glass: rgba(28, 28, 30, 0.8);
                 --glass-border: rgba(255, 255, 255, 0.12);
-                --glow: rgba(255, 255, 255, 0.08); /* Рассеянное свечение */
+                --glow: rgba(10, 132, 255, 0.15); /* Синеватое свечение в темноте */
                 --accent: #0a84ff;
                 --danger: #ff453a;
                 --text: #ffffff;
@@ -35,37 +35,52 @@
             font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
             background: var(--bg); color: var(--text);
             margin: 0; 
-            padding: 20px 20px calc(130px + env(safe-area-inset-bottom)) 20px;
-            -webkit-overflow-scrolling: touch;
+            padding: 15px 14px calc(110px + env(safe-area-inset-bottom)) 14px;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Оптимизированный Liquid Glass с мягким свечением */
+        #mainContent { width: 100%; max-width: 480px; display: none; }
+        #app { width: 100%; }
+
+        /* Эффект подсветки */
         .glass-panel {
             background: var(--glass);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
             border: 1px solid var(--glass-border);
-            border-radius: 22px;
-            box-shadow: 0 0 15px 2px var(--glow), 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            /* Тень, которая не сливается */
+            box-shadow: 0 0 20px 0px var(--glow), 0 10px 30px rgba(0,0,0,0.2);
             transform: translateZ(0);
-            contain: paint; /* Оптимизация отрисовки теней */
         }
 
-        .room-block { margin-bottom: 16px; transition: transform 0.2s ease; }
-        .room-block.empty-room { opacity: 0.5; transform: scale(0.97); box-shadow: none; border-color: var(--danger); }
+        .room-block { 
+            margin-bottom: 14px; /* Оптимальное расстояние для свечения */
+            width: 100%;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Компактный заголовок */
+        .room-header { 
+            padding: 10px 16px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            cursor: pointer;
+        }
+        
+        .room-title { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; }
+        .arrow { transition: transform 0.4s ease; color: var(--secondary); font-size: 9px; }
 
-        .room-header { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .room-title { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
-        .arrow { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); color: var(--secondary); font-size: 10px; }
+        .empty-toggle { 
+            display: flex; align-items: center; gap: 6px; 
+            color: var(--danger); font-weight: 600; font-size: 12px;
+        }
+        .empty-toggle input { width: 20px; height: 20px; accent-color: var(--danger); }
 
-        .empty-toggle { display: flex; align-items: center; gap: 8px; color: var(--danger); font-weight: 600; font-size: 13px; }
-        .empty-toggle input { width: 22px; height: 22px; accent-color: var(--danger); }
-
-        /* ИДЕАЛЬНО ПЛАВНАЯ АНИМАЦИЯ (CSS Grid Trick) */
+        /* Плавное сворачивание */
         .room-content-wrapper {
             display: grid;
             grid-template-rows: 0fr;
-            transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: grid-template-rows 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
             overflow: hidden;
         }
         .room-content-wrapper.open { grid-template-rows: 1fr; }
@@ -75,86 +90,87 @@
             opacity: 0;
             transform: translateY(-5px);
             transition: opacity 0.3s ease, transform 0.3s ease;
-            padding: 0 20px 20px 20px;
+            padding: 0 16px 12px 16px;
         }
-        .room-content-wrapper.open .room-content { opacity: 1; transform: translateY(0); border-top: 1px solid var(--glass-border); padding-top: 10px; }
+        .room-content-wrapper.open .room-content { 
+            opacity: 1; transform: translateY(0); 
+            border-top: 1px solid var(--glass-border); 
+            padding-top: 8px;
+        }
 
-        .resident { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 0.5px solid var(--glass-border); }
+        /* Ультра-компактные строки жильцов */
+        .resident { 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 6px 0; 
+            border-bottom: 0.5px solid var(--glass-border); 
+        }
         .resident:last-child { border-bottom: none; }
+        .res-name { font-weight: 500; font-size: 15px; }
 
-        /* Чекбоксы в ряд */
-        .check-group { display: flex; gap: 14px; }
-        .check-group label { display: flex; align-items: center; gap: 6px; font-size: 18px; }
-        input[type="checkbox"] { width: 24px; height: 24px; border-radius: 8px; accent-color: var(--accent); }
+        .check-group { display: flex; gap: 10px; }
+        .check-group label { display: flex; align-items: center; gap: 4px; font-size: 16px; }
+        
+        input[type="checkbox"] { 
+            width: 24px; height: 24px; border-radius: 8px; 
+            accent-color: var(--accent);
+        }
 
         /* Исправленный экран входа */
         #authScreen {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
-            height: 100dvh; /* Используем dynamic vh для фикса "съезда" кнопок */
+            position: fixed; inset: 0; background: var(--bg); z-index: 9999; height: 100dvh;
         }
-        .auth-card { width: 290px; padding: 35px 25px; text-align: center; }
-
+        .auth-card { width: 280px; padding: 30px; text-align: center; }
+        
         .pin-field {
-            width: 100%; font-size: 28px; background: rgba(255,255,255,0.05); 
-            border: 2px solid var(--accent); border-radius: 18px; padding: 12px; 
+            width: 100%; font-size: 28px; background: rgba(0,0,0,0.05); 
+            border: 2px solid var(--accent); border-radius: 16px; padding: 12px; 
             color: var(--text); text-align: center; margin: 20px 0; outline: none;
+            letter-spacing: 6px;
         }
 
-        /* Нижняя панель управления */
+        /* Компактная нижняя панель */
         .main-controls { 
             position: fixed; bottom: 0; left: 0; right: 0;
+            display: flex; justify-content: center;
             background: var(--glass);
-            backdrop-filter: blur(25px) saturate(200%);
-            -webkit-backdrop-filter: blur(25px) saturate(200%);
-            padding: 15px 20px calc(20px + env(safe-area-inset-bottom)) 20px;
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            padding: 12px 16px calc(15px + env(safe-area-inset-bottom)) 16px;
             border-top: 1px solid var(--glass-border);
             z-index: 1000;
         }
 
         .btn-main { 
-            width: 100%; background: var(--accent); color: white; padding: 18px; 
-            border-radius: 20px; border: none; font-size: 17px; font-weight: 700; 
+            width: 100%; max-width: 400px; background: var(--accent); color: white; padding: 16px; 
+            border-radius: 18px; border: none; font-size: 17px; font-weight: 700; 
             box-shadow: 0 8px 20px rgba(0, 122, 255, 0.2);
-            transition: transform 0.2s;
         }
-        .btn-main:active { transform: scale(0.96); opacity: 0.9; }
+        .btn-main:active { transform: scale(0.97); }
 
-        /* Отчет (модалка) */
+        h2 { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin: 10px 0 20px 5px; align-self: flex-start; }
+        
+        /* Модалка отчета */
         #reportScreen {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.3); 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); 
             backdrop-filter: blur(10px); z-index: 99999; 
             display: none; flex-direction: column; justify-content: flex-end;
         }
         .report-modal {
             background: var(--glass);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border-radius: 35px 35px 0 0; 
-            padding: 30px 25px calc(30px + env(safe-area-inset-bottom)) 25px;
-            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border-radius: 30px 30px 0 0; 
+            padding: 25px 20px calc(25px + env(safe-area-inset-bottom)) 20px;
+            transform: translateY(100%); transition: transform 0.4s ease-out;
+            width: 100%; max-width: 500px; align-self: center;
         }
         #reportScreen.active .report-modal { transform: translateY(0); }
-
-        .report-box { 
-            font-size: 16px; background: rgba(255,255,255,0.05); padding: 20px; 
-            border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--glass-border); white-space: pre-wrap;
-        }
-        
-        .copy-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-        .btn-copy { padding: 16px; border-radius: 16px; font-weight: 700; border: none; font-size: 14px; }
-        .copy-blue { background: var(--accent); color: white; }
-        .copy-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
-
-        #mainContent { display: none; }
-        h2 { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin-bottom: 25px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div id="authScreen">
         <div class="glass-panel auth-card">
-            <h2 style="font-size: 24px; margin: 0;">🔒 Вход</h2>
+            <h3 style="margin:0 0 10px 0;">🔒 Вход</h3>
             <input type="password" id="pinInput" class="pin-field" inputmode="numeric" maxlength="4" placeholder="••••">
             <button class="btn-main" onclick="checkPin()">Войти</button>
         </div>
@@ -170,15 +186,14 @@
 
     <div id="reportScreen" onclick="if(event.target==this)closeReport()">
         <div class="report-modal">
-            <div style="width: 40px; height: 5px; background: var(--secondary); border-radius: 5px; margin: -15px auto 20px auto; opacity: 0.3;"></div>
-            <h3 style="text-align:center; margin-bottom: 20px;">Отчет сформирован</h3>
-            <div id="reportOutput" class="report-box"></div>
-            <div class="copy-row">
-                <button class="btn-copy copy-blue" onclick="copyPart('main')">Итог</button>
-                <button class="btn-copy copy-outline" onclick="copyPart('weekend')">Выходные</button>
+            <div style="width: 35px; height: 5px; background: var(--secondary); border-radius: 10px; margin: -10px auto 20px auto; opacity: 0.3;"></div>
+            <div id="reportOutput" style="font-size:15px; background:rgba(0,0,0,0.03); padding:15px; border-radius:15px; margin-bottom:15px; border:1px solid var(--glass-border); white-space:pre-wrap;"></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <button class="btn-main" style="padding:12px; font-size:14px;" onclick="copyPart('main')">Копия Итога</button>
+                <button class="btn-main" style="background:transparent; border:2px solid var(--accent); color:var(--accent); box-shadow:none; padding:12px; font-size:14px;" onclick="copyPart('weekend')">Выходные</button>
             </div>
             <button class="btn-main" style="background: var(--bg); color: var(--text); box-shadow: none;" onclick="closeReport()">Закрыть</button>
-            <button style="width: 100%; background: none; border: none; color: var(--danger); margin-top: 20px; font-weight: 600;" onclick="resetAll()">Сбросить всё</button>
+            <button style="width: 100%; background: none; border: none; color: var(--danger); margin-top: 15px; font-weight: 600; font-size: 13px;" onclick="resetAll()">Сбросить всё</button>
         </div>
     </div>
 
@@ -200,18 +215,18 @@
         { room: "600", names: ["Грязнов С.", "Андрианов Э."] }
     ];
 
-    const storageKey = 'dorm_v_final';
+    const storageKey = 'dorm_final_compact';
     let savedData = JSON.parse(localStorage.getItem(storageKey)) || {};
     let rMain = "", rWeekend = "";
 
-    if (localStorage.getItem('dorm_auth') === 'true') unlockApp();
+    if (localStorage.getItem('dorm_auth_ok') === 'true') unlockApp();
 
     function checkPin() {
         if (document.getElementById('pinInput').value === SECRET_PIN) {
-            localStorage.setItem('dorm_auth', 'true');
+            localStorage.setItem('dorm_auth_ok', 'true');
             unlockApp();
         } else {
-            alert('Неверный код');
+            alert('❌');
             document.getElementById('pinInput').value = '';
         }
     }
@@ -228,7 +243,8 @@
         data.forEach(item => {
             const isEmpty = savedData[`empty_${item.room}`] || false;
             const roomDiv = document.createElement('div');
-            roomDiv.className = `room-block glass-panel ${isEmpty ? 'empty-room' : ''}`;
+            roomDiv.className = `room-block glass-panel`;
+            if(isEmpty) roomDiv.style.opacity = "0.5";
             
             let resHtml = '';
             item.names.forEach(name => {
@@ -238,7 +254,7 @@
 
                 resHtml += `
                     <div class="resident">
-                        <span class="res-name">${name}</span>
+                        <span class="res-name" style="${isEmpty ? 'opacity:0.3' : ''}">${name}</span>
                         <div class="check-group">
                             <label><input type="checkbox" onchange="save('${idP}', this.checked)" ${isP?'checked':''} ${isEmpty?'disabled':''}>🏠</label>
                             <label><input type="checkbox" onchange="save('${idW}', this.checked)" ${isW?'checked':''}>📅</label>
@@ -248,7 +264,7 @@
 
             roomDiv.innerHTML = `
                 <div class="room-header" onclick="toggleRoom(this)">
-                    <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
                         <span class="room-title">Комната ${item.room}</span>
                         <span class="arrow">▼</span>
                     </div>
@@ -309,9 +325,7 @@
     function copyPart(t) {
         const text = (t === 'main') ? rMain : rWeekend;
         const clean = text.replace(/[🏠📅•]/g, '').trim();
-        navigator.clipboard.writeText(clean).then(() => {
-            alert('Скопировано! ✅');
-        });
+        navigator.clipboard.writeText(clean).then(() => alert('Скопировано'));
     }
 
     function closeReport() {
@@ -321,7 +335,7 @@
     }
 
     function resetAll() {
-        if (confirm("Сбросить все данные?")) { localStorage.clear(); location.reload(); }
+        if (confirm("Удалить всё?")) { localStorage.removeItem(storageKey); location.reload(); }
     }
 </script>
 </body>
