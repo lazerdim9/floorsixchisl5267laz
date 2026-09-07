@@ -789,7 +789,7 @@
       nameEl.spellcheck = false;
       nameEl.setAttribute("enterkeyhint", "done");
       nameEl.value = room.name;
-      nameEl.readOnly = !isEditMode;
+      nameEl.readOnly = true;
       nameEl.onclick = (e) => e.stopPropagation();
       nameEl.onchange = () => {
         room.name = nameEl.value.trim() || "Комната";
@@ -819,29 +819,6 @@
       room.people.forEach(person => {
         body.appendChild(renderPersonRow(room, person));
       });
-
-      if(isEditMode){
-        const addRow = document.createElement("div");
-        addRow.className = "add-row";
-        addRow.textContent = "＋ Добавить человека";
-        addRow.onclick = (e) => {
-          e.stopPropagation();
-          const p = { id: uid(), name: "Новый человек", present: true, weekend: false };
-          room.people.push(p);
-          openRoomIds.add(room.id);
-          persist(); render();
-          setTimeout(() => {
-            const el = document.querySelector('[data-person-id="' + p.id + '"]');
-            if(el) el.select();
-          }, 30);
-        };
-        body.appendChild(addRow);
-      }
-
-      card.appendChild(head);
-      card.appendChild(body);
-      wrap.appendChild(card);
-    });
   }
 
   function renderPersonRow(room, person){
