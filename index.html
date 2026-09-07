@@ -85,8 +85,8 @@
   }
 
   .floor-title-row{
-    display:flex; align-items:baseline; justify-content:space-between;
-    margin-top:10px; padding:0 4px;
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:10px; padding:0 4px; gap:12px;
   }
   .floor-title-input{
     font-size:30px; font-weight:750; letter-spacing:-0.02em;
@@ -95,6 +95,17 @@
   }
   .floor-sub{
     font-size:13px; color:var(--text-lo); font-weight:600; margin-top:2px;
+  }
+
+  .settings-btn{
+    width:38px; height:38px; border-radius:50%;
+    background:var(--glass); border:1px solid var(--glass-border);
+    color:var(--text-hi); font-size:18px; display:flex;
+    align-items:center; justify-content:center; cursor:pointer;
+    flex-shrink:0; transition:background .15s ease, transform .15s ease;
+  }
+  .settings-btn:active{
+    background:var(--glass-strong); transform:scale(0.95);
   }
 
   /* ---------- Rooms list ---------- */
@@ -244,6 +255,9 @@
     width:38px; height:5px; border-radius:99px; background:rgba(255,255,255,0.25);
     margin:6px auto 16px;
   }
+  .sheet-title{
+    font-size:20px; font-weight:750; margin-bottom:16px; text-align:center; color:var(--text-hi);
+  }
   .report-card{
     background:rgba(0,0,0,0.35);
     border:1px solid var(--glass-border);
@@ -261,9 +275,6 @@
   .report-line b{ color:var(--text-mid); font-weight:650; }
   .report-empty{ font-size:15px; color:var(--text-mid); }
 
-  .sheet-section{
-    margin-top:20px; padding-top:16px; border-top:1px solid var(--hairline);
-  }
   .sheet-section-head{
     font-size:14px; font-weight:700; color:var(--text-mid); margin-bottom:10px;
   }
@@ -326,6 +337,7 @@
         <input class="floor-title-input" id="floorTitle" spellcheck="false" enterkeyhint="done">
         <div class="floor-sub" id="floorSub"></div>
       </div>
+      <button class="settings-btn" id="settingsBtn" title="Настройки конфигурации">⚙</button>
     </div>
   </div>
 
@@ -336,10 +348,11 @@
 </div>
 
 <div class="fab-wrap" id="fabWrap" style="display:none">
-  <div class="fab" id="reportBtn">Отчёт и Конфигурация</div>
+  <div class="fab" id="reportBtn">Отчёт</div>
 </div>
 
-<div class="overlay" id="overlay">
+<!-- Модальное окно для отчёта -->
+<div class="overlay" id="reportOverlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div id="reportContent"></div>
@@ -350,24 +363,35 @@
     </div>
     <div class="sheet-btn" id="copyAll" style="margin-bottom:10px;">Скопировать весь отчёт</div>
 
-    <div class="sheet-section">
-      <div class="sheet-section-head">⚙ Конфигурация жильцов и комнат</div>
-      <div class="sheet-btn-row">
-        <div class="sheet-btn accent" id="saveTemplate">Сохранить как шаблон</div>
-        <div class="sheet-btn" id="loadTemplate">Загрузить шаблон</div>
-      </div>
-      <div class="sheet-btn-row">
-        <div class="sheet-btn" id="exportConfig">Экспорт JSON</div>
-        <div class="sheet-btn" id="importConfig">Импорт JSON</div>
-      </div>
-      <div id="jsonAreaWrap" style="display:none; margin-top:10px;">
-        <textarea class="json-area" id="jsonInput" placeholder="Вставьте JSON конфигурации здесь..."></textarea>
-        <div class="sheet-btn accent" id="applyImport">Применить конфигурацию</div>
-      </div>
+    <div class="sheet-close" id="closeReportSheet">Закрыть</div>
+    <div class="sheet-reset" id="resetAll">Сбросить все отметки присутствия</div>
+  </div>
+</div>
+
+<!-- Модальное окно для настроек и конфигурации -->
+<div class="overlay" id="configOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Конфигурация жильцов</div>
+    
+    <div class="sheet-section-head">📌 Сохраненный шаблон</div>
+    <div class="sheet-btn-row">
+      <div class="sheet-btn accent" id="saveTemplate">Сохранить текущий как шаблон</div>
+      <div class="sheet-btn" id="loadTemplate">Загрузить шаблон</div>
     </div>
 
-    <div class="sheet-close" id="closeSheet">Закрыть</div>
-    <div class="sheet-reset" id="resetAll">Сбросить все отметки присутствия</div>
+    <div class="sheet-section-head" style="margin-top:16px;">📄 Резервная копия (JSON)</div>
+    <div class="sheet-btn-row">
+      <div class="sheet-btn" id="exportConfig">Экспорт JSON</div>
+      <div class="sheet-btn" id="importConfig">Импорт JSON</div>
+    </div>
+    
+    <div id="jsonAreaWrap" style="display:none; margin-top:10px;">
+      <textarea class="json-area" id="jsonInput" placeholder="Вставьте JSON конфигурации здесь..."></textarea>
+      <div class="sheet-btn accent" id="applyImport">Применить конфигурацию</div>
+    </div>
+
+    <div class="sheet-close" id="closeConfigSheet">Закрыть</div>
   </div>
 </div>
 
@@ -677,7 +701,7 @@
     return row;
   }
 
-  // ---------- Report & Config ----------
+  // ---------- Report ----------
 
   function buildReport(){
     const floor = getFloor();
@@ -728,8 +752,7 @@
     html += '</div>';
     el.innerHTML = html;
 
-    document.getElementById("jsonAreaWrap").style.display = "none";
-    document.getElementById("overlay").classList.add("show");
+    document.getElementById("reportOverlay").classList.add("show");
 
     document.getElementById("copyAbsent").onclick = () => copyText(groupsToText(r.absentByRoom), "Список отсутствующих скопирован");
     document.getElementById("copyWeekend").onclick = () => copyText(groupsToText(r.weekendByRoom), "Список выходных скопирован");
@@ -741,10 +764,19 @@
   }
 
   function closeReport(){
-    document.getElementById("overlay").classList.remove("show");
+    document.getElementById("reportOverlay").classList.remove("show");
   }
 
   // ---------- Config Handlers ----------
+
+  function openConfig(){
+    document.getElementById("jsonAreaWrap").style.display = "none";
+    document.getElementById("configOverlay").classList.add("show");
+  }
+
+  function closeConfig(){
+    document.getElementById("configOverlay").classList.remove("show");
+  }
 
   async function saveAsTemplate(){
     try {
@@ -767,7 +799,7 @@
         activeFloorId = state.activeFloorId || state.floors[0].id;
         await persist();
         render();
-        closeReport();
+        closeConfig();
         showToast("Шаблон успешно загружен");
       }
     } catch(e) {
@@ -802,7 +834,7 @@
         activeFloorId = state.activeFloorId || state.floors[0].id;
         await persist();
         render();
-        closeReport();
+        closeConfig();
         showToast("Новая конфигурация успешно применена!");
       } else {
         showToast("Некорректный формат JSON");
@@ -832,10 +864,11 @@
       }, 30);
     };
 
+    // Events for Report
     document.getElementById("reportBtn").onclick = openReport;
-    document.getElementById("closeSheet").onclick = closeReport;
-    document.getElementById("overlay").onclick = (e) => {
-      if(e.target.id === "overlay") closeReport();
+    document.getElementById("closeReportSheet").onclick = closeReport;
+    document.getElementById("reportOverlay").onclick = (e) => {
+      if(e.target.id === "reportOverlay") closeReport();
     };
     document.getElementById("resetAll").onclick = () => {
       if(confirm("Сбросить все отметки на этаже к значению по умолчанию (все на месте, никто не на выходных)?")){
@@ -846,6 +879,12 @@
       }
     };
 
+    // Events for Settings / Config
+    document.getElementById("settingsBtn").onclick = openConfig;
+    document.getElementById("closeConfigSheet").onclick = closeConfig;
+    document.getElementById("configOverlay").onclick = (e) => {
+      if(e.target.id === "configOverlay") closeConfig();
+    };
     document.getElementById("saveTemplate").onclick = saveAsTemplate;
     document.getElementById("loadTemplate").onclick = loadFromTemplate;
     document.getElementById("exportConfig").onclick = exportConfigText;
