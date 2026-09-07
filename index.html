@@ -93,8 +93,16 @@
     outline:none; border:none; background:none; color:var(--text-hi);
     width:100%; font-family:inherit; padding:0; margin:0;
   }
+  .floor-title-input[readonly]{
+    pointer-events:none;
+  }
   .floor-sub{
     font-size:13px; color:var(--text-lo); font-weight:600; margin-top:2px;
+  }
+  .edit-badge{
+    display:inline-block; font-size:11px; font-weight:700; color:var(--warn);
+    background:rgba(255,177,61,0.15); border:1px solid rgba(255,177,61,0.3);
+    padding:2px 6px; border-radius:6px; margin-left:6px; vertical-align:middle;
   }
 
   .settings-btn{
@@ -103,6 +111,9 @@
     color:var(--text-hi); font-size:18px; display:flex;
     align-items:center; justify-content:center; cursor:pointer;
     flex-shrink:0; transition:background .15s ease, transform .15s ease;
+  }
+  .settings-btn.active-edit{
+    background:rgba(255,177,61,0.25); border-color:var(--warn); color:var(--warn);
   }
   .settings-btn:active{
     background:var(--glass-strong); transform:scale(0.95);
@@ -131,6 +142,9 @@
     outline:none; background:none; border:none; color:var(--text-hi);
     min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     font-family:inherit; padding:0; margin:0;
+  }
+  .room-name-input[readonly]{
+    pointer-events:none;
   }
   .room-status{
     font-size:14px; font-weight:650; white-space:nowrap;
@@ -164,6 +178,9 @@
     outline:none; background:none; border:none; min-width:0;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     font-family:inherit; padding:0; margin:0;
+  }
+  .person-name-input[readonly]{
+    pointer-events:none;
   }
   .chk-wrap{ display:flex; align-items:center; gap:6px; }
   .chk{
@@ -289,6 +306,9 @@
   .sheet-btn.accent{
     background:rgba(10,132,255,0.18); border-color:rgba(10,132,255,0.4); color:var(--accent-2);
   }
+  .sheet-btn.warn{
+    background:rgba(255,177,61,0.18); border-color:rgba(255,177,61,0.4); color:var(--warn);
+  }
   .sheet-close{
     display:block; width:100%; text-align:center; padding:15px;
     border-radius:16px; font-size:16px; font-weight:700;
@@ -343,7 +363,7 @@
 
   <div class="rooms" id="rooms"></div>
 
-  <div class="add-room-btn" id="addRoomBtn" style="margin-top:12px">＋ Добавить комнату</div>
+  <div class="add-room-btn" id="addRoomBtn" style="margin-top:12px; display:none;">＋ Добавить комнату</div>
 
 </div>
 
@@ -374,6 +394,11 @@
     <div class="sheet-handle"></div>
     <div class="sheet-title">Конфигурация жильцов</div>
     
+    <div class="sheet-section-head">✏️ Режим редактирования</div>
+    <div class="sheet-btn-row" style="margin-bottom:18px;">
+      <div class="sheet-btn warn" id="toggleEditBtn">Включить редактирование</div>
+    </div>
+
     <div class="sheet-section-head">📌 Сохраненный шаблон</div>
     <div class="sheet-btn-row">
       <div class="sheet-btn accent" id="saveTemplate">Сохранить текущий как шаблон</div>
@@ -391,7 +416,7 @@
       <div class="sheet-btn accent" id="applyImport">Применить конфигурацию</div>
     </div>
 
-    <div class="sheet-close" id="closeConfigSheet">Закрыть</div>
+    <div class="sheet-close" id="closeConfigSheet">Сохранить и закрыть</div>
   </div>
 </div>
 
@@ -406,6 +431,7 @@
   let state = null;
   let activeFloorId = null;
   let openRoomIds = new Set();
+  let isEditMode = false;
 
   const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -506,6 +532,14 @@
     renderFloorHeader();
     renderRooms();
     document.getElementById("fabWrap").style.display = state.floors.length ? "flex" : "none";
+    document.getElementById("addRoomBtn").style.display = isEditMode ? "flex" : "none";
+    
+    const settingsBtn = document.getElementById("settingsBtn");
+    if(isEditMode){
+      settingsBtn.classList.add("active-edit");
+    } else {
+      settingsBtn.classList.remove("active-edit");
+    }
   }
 
   function renderFloorTabs(){
@@ -532,7 +566,9 @@
     if(titleEl.value !== floor.name) titleEl.value = floor.name;
     const total = floor.rooms.reduce((s,r) => s + r.people.length, 0);
     const roomCount = floor.rooms.length;
-    subEl.textContent = roomCount + (roomCount === 1 ? " комната" : (roomCount>=2&&roomCount<=4 ? " комнаты":" комнат")) + " · " + total + " чел.";
+    subEl.innerHTML = roomCount + (roomCount === 1 ? " комната" : (roomCount>=2&&roomCount<=4 ? " комнаты":" комнат")) + " · " + total + " чел." + (isEditMode ? ' <span class="edit-badge">Редактирование</span>' : '');
+
+    titleEl.readOnly = !isEditMode;
 
     titleEl.onchange = () => {
       const val = titleEl.value.trim() || "Этаж";
@@ -557,7 +593,7 @@
     if(!floor || floor.rooms.length === 0){
       const es = document.createElement("div");
       es.className = "empty-state";
-      es.innerHTML = '<div class="big">🏢</div>Комнат пока нет.<br>Добавьте первую ниже.';
+      es.innerHTML = '<div class="big">🏢</div>Комнат пока нет.' + (isEditMode ? '<br>Добавьте первую ниже.' : '');
       wrap.appendChild(es);
       return;
     }
@@ -578,6 +614,7 @@
       nameEl.spellcheck = false;
       nameEl.setAttribute("enterkeyhint", "done");
       nameEl.value = room.name;
+      nameEl.readOnly = !isEditMode;
       nameEl.onclick = (e) => e.stopPropagation();
       nameEl.onchange = () => {
         room.name = nameEl.value.trim() || "Комната";
@@ -591,21 +628,24 @@
       statusEl.className = "room-status " + status.cls;
       statusEl.textContent = status.text;
 
-      const delEl = document.createElement("div");
-      delEl.className = "room-del";
-      delEl.textContent = "✕";
-      delEl.onclick = (e) => {
-        e.stopPropagation();
-        if(confirm('Удалить "' + room.name + '"?')){
-          floor.rooms = floor.rooms.filter(r => r.id !== room.id);
-          persist(); render();
-        }
-      };
-
       head.appendChild(chevron);
       head.appendChild(nameEl);
       head.appendChild(statusEl);
-      head.appendChild(delEl);
+
+      if(isEditMode){
+        const delEl = document.createElement("div");
+        delEl.className = "room-del";
+        delEl.textContent = "✕";
+        delEl.onclick = (e) => {
+          e.stopPropagation();
+          if(confirm('Удалить "' + room.name + '"?')){
+            floor.rooms = floor.rooms.filter(r => r.id !== room.id);
+            persist(); render();
+          }
+        };
+        head.appendChild(delEl);
+      }
+
       head.onclick = () => {
         if(openRoomIds.has(room.id)) openRoomIds.delete(room.id);
         else openRoomIds.add(room.id);
@@ -619,21 +659,23 @@
         body.appendChild(renderPersonRow(room, person));
       });
 
-      const addRow = document.createElement("div");
-      addRow.className = "add-row";
-      addRow.textContent = "＋ Добавить человека";
-      addRow.onclick = (e) => {
-        e.stopPropagation();
-        const p = { id: uid(), name: "Новый человек", present: true, weekend: false };
-        room.people.push(p);
-        openRoomIds.add(room.id);
-        persist(); render();
-        setTimeout(() => {
-          const el = document.querySelector('[data-person-id="' + p.id + '"]');
-          if(el) el.select();
-        }, 30);
-      };
-      body.appendChild(addRow);
+      if(isEditMode){
+        const addRow = document.createElement("div");
+        addRow.className = "add-row";
+        addRow.textContent = "＋ Добавить человека";
+        addRow.onclick = (e) => {
+          e.stopPropagation();
+          const p = { id: uid(), name: "Новый человек", present: true, weekend: false };
+          room.people.push(p);
+          openRoomIds.add(room.id);
+          persist(); render();
+          setTimeout(() => {
+            const el = document.querySelector('[data-person-id="' + p.id + '"]');
+            if(el) el.select();
+          }, 30);
+        };
+        body.appendChild(addRow);
+      }
 
       card.appendChild(head);
       card.appendChild(body);
@@ -650,6 +692,7 @@
     nameEl.spellcheck = false;
     nameEl.setAttribute("enterkeyhint", "done");
     nameEl.value = person.name;
+    nameEl.readOnly = !isEditMode;
     nameEl.setAttribute("data-person-id", person.id);
     nameEl.onclick = (e) => e.stopPropagation();
     nameEl.onchange = () => {
@@ -685,19 +728,22 @@
     };
     weekendWrap.appendChild(weekendChk);
 
-    const delEl = document.createElement("div");
-    delEl.className = "person-del";
-    delEl.textContent = "✕";
-    delEl.onclick = (e) => {
-      e.stopPropagation();
-      room.people = room.people.filter(p => p.id !== person.id);
-      persist(); render();
-    };
-
     row.appendChild(nameEl);
     row.appendChild(presentWrap);
     row.appendChild(weekendWrap);
-    row.appendChild(delEl);
+
+    if(isEditMode){
+      const delEl = document.createElement("div");
+      delEl.className = "person-del";
+      delEl.textContent = "✕";
+      delEl.onclick = (e) => {
+        e.stopPropagation();
+        room.people = room.people.filter(p => p.id !== person.id);
+        persist(); render();
+      };
+      row.appendChild(delEl);
+    }
+
     return row;
   }
 
@@ -769,13 +815,27 @@
 
   // ---------- Config Handlers ----------
 
+  function updateEditBtnText(){
+    const btn = document.getElementById("toggleEditBtn");
+    if(isEditMode){
+      btn.textContent = "Завершить редактирование";
+      btn.className = "sheet-btn accent";
+    } else {
+      btn.textContent = "Включить редактирование";
+      btn.className = "sheet-btn warn";
+    }
+  }
+
   function openConfig(){
     document.getElementById("jsonAreaWrap").style.display = "none";
+    updateEditBtnText();
     document.getElementById("configOverlay").classList.add("show");
   }
 
-  function closeConfig(){
+  async function closeConfig(){
     document.getElementById("configOverlay").classList.remove("show");
+    await persist();
+    render();
   }
 
   async function saveAsTemplate(){
@@ -853,6 +913,7 @@
     render();
 
     document.getElementById("addRoomBtn").onclick = () => {
+      if(!isEditMode) return;
       const floor = getFloor();
       const r = { id: uid(), name: "Новая комната", people: [] };
       floor.rooms.push(r);
@@ -885,6 +946,18 @@
     document.getElementById("configOverlay").onclick = (e) => {
       if(e.target.id === "configOverlay") closeConfig();
     };
+
+    document.getElementById("toggleEditBtn").onclick = () => {
+      isEditMode = !isEditMode;
+      updateEditBtnText();
+      render();
+      if(isEditMode){
+        showToast("Режим редактирования включен");
+      } else {
+        showToast("Режим редактирования выключен");
+      }
+    };
+
     document.getElementById("saveTemplate").onclick = saveAsTemplate;
     document.getElementById("loadTemplate").onclick = loadFromTemplate;
     document.getElementById("exportConfig").onclick = exportConfigText;
