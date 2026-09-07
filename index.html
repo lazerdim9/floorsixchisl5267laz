@@ -1,178 +1,1113 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Этаж 5</title>
-  <style>
-    /* 1. Настройка фона всего экрана для предотвращения белых полос */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#08090c">
+<title>Численность</title>
+<style>
+  :root {
+    --bg-main: #08090c;
+    --glass-bg: rgba(255, 255, 255, 0.07);
+    --glass-bg-hover: rgba(255, 255, 255, 0.12);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --glass-highlight: rgba(255, 255, 255, 0.25);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --text-hi: rgba(255, 255, 255, 0.95);
+    --text-mid: rgba(255, 255, 255, 0.65);
+    --text-lo: rgba(255, 255, 255, 0.40);
+    --accent: #0A84FF;
+    --accent-glow: rgba(10, 132, 255, 0.4);
+    --danger: #FF453A;
+    --warn: #FF9F0A;
+    --ok: #30D158;
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
+  }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      background-color: #0b0b10; /* Тёмный фон всего приложения */
-      color: #ffffff;
-      /* Отключает резиновый отскок прокрутки, из-за которого виден белый фон */
-      overscroll-behavior-y: none; 
-      overflow: hidden;
-    }
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
 
-    /* Главный контейнер */
-    .app-container {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      padding-top: env(safe-area-inset-top, 20px);
-      position: relative;
-    }
+  /* Фикс белой полосы и фризов при скролле */
+  html, body {
+    height: 100%;
+    background-color: var(--bg-main);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
 
-    /* Шапка */
-    .header {
-      padding: 16px 20px 8px 20px;
-    }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    color: var(--text-hi);
+    background: 
+      radial-gradient(1000px at 10% -10%, rgba(10, 132, 255, 0.22), transparent 60%),
+      radial-gradient(800px at 100% 20%, rgba(191, 90, 242, 0.15), transparent 50%),
+      radial-gradient(800px at 50% 110%, rgba(48, 209, 88, 0.12), transparent 50%),
+      var(--bg-main);
+    background-attachment: fixed;
+    min-height: 100vh;
+    overscroll-behavior-y: none;
+    -webkit-font-smoothing: antialiased;
+  }
 
-    .badge {
-      display: inline-block;
-      background-color: #007aff;
-      color: #ffffff;
-      padding: 6px 14px;
-      border-radius: 16px;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 12px;
-    }
+  .app {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: calc(env(safe-area-inset-top) + 12px) 16px calc(env(safe-area-inset-bottom) + 110px);
+    min-height: 100vh;
+  }
 
-    .title {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
+  /* ---------- Liquid Glass Topbar ---------- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 12px 16px;
+    margin: -12px -16px 16px;
+    padding-top: calc(env(safe-area-inset-top) + 12px);
+    background: rgba(8, 9, 12, 0.72);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
 
-    .subtitle {
-      font-size: 14px;
-      color: #8e8e93;
-    }
+  .floor-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .floor-tabs::-webkit-scrollbar { display: none; }
 
-    /* 2. Область прокрутки комнат */
-    .rooms-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px 20px 90px 20px; /* Нижний отступ 90px, чтобы кнопка не перекрывала элементы */
-      -webkit-overflow-scrolling: touch;
-    }
+  .floor-tab {
+    flex: 0 0 auto;
+    padding: 8px 18px;
+    border-radius: 99px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-mid);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
 
-    /* Карточка комнаты */
-    .room-card {
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      backdrop-filter: blur(10px);
-    }
+  .floor-tab.active {
+    background: linear-gradient(135deg, rgba(10, 132, 255, 0.85), rgba(0, 91, 234, 0.85));
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
 
-    .room-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+  .floor-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    gap: 12px;
+  }
 
-    .chevron {
-      color: #8e8e93;
-      font-size: 12px;
-    }
+  .floor-title-input {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    outline: none;
+    border: none;
+    background: none;
+    color: var(--text-hi);
+    width: 100%;
+    font-family: inherit;
+    padding: 0;
+    margin: 0;
+  }
+  .floor-title-input[readonly] { pointer-events: none; }
 
-    .room-name {
-      font-size: 16px;
-      font-weight: 600;
-    }
+  .floor-sub {
+    font-size: 13px;
+    color: var(--text-mid);
+    font-weight: 500;
+    margin-top: 2px;
+  }
 
-    .status {
-      color: #ff3b30;
-      font-size: 14px;
-      font-weight: 500;
-    }
+  .edit-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--warn);
+    background: rgba(255, 159, 10, 0.18);
+    border: 1px solid rgba(255, 159, 10, 0.35);
+    padding: 2px 8px;
+    border-radius: 8px;
+    margin-left: 6px;
+  }
 
-    /* 3. Фиксированная кнопка снизу */
-    .bottom-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 10px)) 20px;
-      background: linear-gradient(to top, rgba(11, 11, 16, 1) 70%, rgba(11, 11, 16, 0));
-    }
+  .settings-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-hi);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .settings-btn.active-edit {
+    background: rgba(255, 159, 10, 0.22);
+    border-color: var(--warn);
+    color: var(--warn);
+  }
+  .settings-btn:active { transform: scale(0.92); }
 
-    .report-btn {
-      width: 100%;
-      height: 50px;
-      background-color: #007aff;
-      color: #ffffff;
-      border: none;
-      border-radius: 25px;
-      font-size: 17px;
-      font-weight: 600;
-      cursor: pointer;
-    }
+  /* ---------- Glass Cards ---------- */
+  .rooms { display: flex; flex-direction: column; gap: 12px; }
 
-    .report-btn:active {
-      opacity: 0.8;
-    }
-  </style>
+  .room-card {
+    border-radius: var(--radius-lg);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+    overflow: hidden;
+    /* Оптимизация производительности: плавные переходы без размытия */
+    will-change: transform;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .room-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    cursor: pointer;
+  }
+
+  .room-name-input {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    outline: none;
+    background: none;
+    border: none;
+    color: var(--text-hi);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .room-name-input[readonly] { pointer-events: none; }
+
+  .room-status {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .room-status.empty { color: var(--danger); background: rgba(255, 69, 58, 0.12); }
+  .room-status.full { color: var(--ok); background: rgba(48, 209, 88, 0.12); }
+  .room-status.partial { color: var(--warn); background: rgba(255, 159, 10, 0.12); }
+
+  .chevron {
+    color: var(--text-lo);
+    font-size: 14px;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    width: 14px;
+    text-align: center;
+  }
+  .room-card.open .chevron { transform: rotate(90deg); }
+
+  .room-body {
+    display: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.15);
+  }
+  .room-card.open .room-body { display: block; }
+
+  .person-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .person-row:first-child { border-top: none; }
+
+  .person-name-input {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-hi);
+    outline: none;
+    background: none;
+    border: none;
+    min-width: 0;
+    font-family: inherit;
+  }
+  .person-name-input[readonly] { pointer-events: none; }
+
+  .chk-wrap { display: flex; align-items: center; }
+
+  /* ЖИДКИЕ ЧЕКБОКСЫ (iOS style) */
+  .chk {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .chk.present:checked {
+    background: linear-gradient(135deg, #0A84FF, #0056C6);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 2px 8px rgba(10, 132, 255, 0.4);
+  }
+  .chk.weekend:checked {
+    background: linear-gradient(135deg, #FF9F0A, #C67400);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 2px 8px rgba(255, 159, 10, 0.4);
+  }
+  .chk:checked::after {
+    content: "✓";
+    color: #fff;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .person-del {
+    color: var(--text-lo);
+    font-size: 16px;
+    padding: 4px;
+    cursor: pointer;
+  }
+
+  .add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--accent);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ---------- Floating Glass FAB ---------- */
+  .fab-wrap {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: flex;
+    justify-content: center;
+    padding: 12px 16px calc(env(safe-area-inset-bottom) + 12px);
+    background: linear-gradient(180deg, transparent, rgba(8, 9, 12, 0.9) 70%);
+    pointer-events: none;
+  }
+  .fab {
+    pointer-events: auto;
+    width: 100%;
+    max-width: 600px;
+    padding: 16px;
+    border-radius: 20px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, rgba(10, 132, 255, 0.9), rgba(0, 91, 234, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 30px rgba(10, 132, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .fab:active { transform: scale(0.98); }
+
+  /* ---------- Modal Sheets ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+    align-items: flex-end;
+  }
+  .overlay.show { display: flex; }
+
+  .sheet {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    background: rgba(20, 22, 28, 0.88);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-bottom: none;
+    border-radius: 28px 28px 0 0;
+    padding: 12px 20px calc(env(safe-area-inset-bottom) + 20px);
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+    animation: sheetUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes sheetUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .sheet-handle {
+    width: 36px;
+    height: 5px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 6px auto 16px;
+  }
+
+  .sheet-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .report-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .report-total { font-size: 18px; font-weight: 750; margin-bottom: 12px; }
+  .report-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-mid);
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+    margin-top: 12px;
+  }
+  .report-section-title:first-of-type { margin-top: 0; }
+  .report-line { font-size: 15px; line-height: 1.5; color: var(--text-hi); }
+  .report-line b { color: var(--text-mid); }
+
+  .sheet-section-head {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-mid);
+    margin-bottom: 10px;
+  }
+
+  .sheet-btn-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .sheet-btn {
+    flex: 1;
+    text-align: center;
+    padding: 14px 10px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-hi);
+    cursor: pointer;
+  }
+  .sheet-btn.accent {
+    background: rgba(10, 132, 255, 0.2);
+    border-color: rgba(10, 132, 255, 0.4);
+    color: #64D2FF;
+  }
+  .sheet-btn.warn {
+    background: rgba(255, 159, 10, 0.2);
+    border-color: rgba(255, 159, 10, 0.4);
+    color: var(--warn);
+  }
+
+  .sheet-close {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 16px;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #0A84FF, #0056C6);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    margin-top: 16px;
+  }
+
+  .sheet-reset {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+    color: var(--danger);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 100px;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(30, 32, 40, 0.95);
+    border: 1px solid var(--glass-border);
+    padding: 12px 20px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-hi);
+    z-index: 80;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .json-area {
+    width: 100%;
+    height: 100px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-hi);
+    padding: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: none;
+    outline: none;
+    margin-bottom: 10px;
+  }
+
+  .boot {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-mid);
+    font-size: 15px;
+    font-weight: 600;
+    z-index: 100;
+    background: var(--bg-main);
+  }
+</style>
 </head>
 <body>
 
-  <div class="app-container">
-    <!-- Шапка -->
-    <div class="header">
-      <div class="badge">Этаж 5</div>
-      <h1 class="title">Этаж 5</h1>
-      <p class="subtitle" id="rooms-count">12 комнат · 0 чел.</p>
-    </div>
+<div id="boot" class="boot">Загрузка интерфейса…</div>
 
-    <!-- Список комнат -->
-    <div class="rooms-list" id="rooms-container">
-      <!-- Элементы рендерятся через JS -->
-    </div>
+<div class="app" id="app" style="display:none">
 
-    <!-- Фиксированная кнопка "Отчёт" -->
-    <div class="bottom-bar">
-      <button class="report-btn">Отчёт</button>
+  <div class="topbar">
+    <div class="floor-tabs" id="floorTabs"></div>
+    <div class="floor-title-row">
+      <div style="flex:1">
+        <input class="floor-title-input" id="floorTitle" spellcheck="false" enterkeyhint="done">
+        <div class="floor-sub" id="floorSub"></div>
+      </div>
+      <button class="settings-btn" id="settingsBtn" title="Настройки">⚙</button>
     </div>
   </div>
 
-  <script>
-    // 4. Фиксированный массив комнат (без возможности добавления)
-    const rooms = ["534", "533", "532", "531", "524", "523", "522", "521", "514", "513", "512", "511"];
+  <div class="rooms" id="rooms"></div>
 
-    const container = document.getElementById('rooms-container');
-    const countElement = document.getElementById('rooms-count');
+</div>
 
-    // Обновляем счётчик
-    countElement.textContent = `${rooms.length} комнат · 0 чел.`;
+<div class="fab-wrap" id="fabWrap" style="display:none">
+  <div class="fab" id="reportBtn">Сформировать отчёт</div>
+</div>
 
-    // Рендерим список
-    rooms.forEach(roomNumber => {
-      const roomCard = document.createElement('div');
-      roomCard.className = 'room-card';
-      roomCard.innerHTML = `
-        <div class="room-info">
-          <span class="chevron">❯</span>
-          <span class="room-name">Комната ${roomNumber}</span>
-        </div>
-        <span class="status">Пусто</span>
-      `;
-      container.appendChild(roomCard);
+<!-- Модальное окно отчёта -->
+<div class="overlay" id="reportOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div id="reportContent"></div>
+    
+    <div class="sheet-btn-row">
+      <div class="sheet-btn" id="copyAbsent">Копия отсутств.</div>
+      <div class="sheet-btn" id="copyWeekend">Копия выход.</div>
+    </div>
+    <div class="sheet-btn" id="copyAll" style="margin-bottom:10px;">Скопировать весь отчёт</div>
+
+    <div class="sheet-close" id="closeReportSheet">Закрыть</div>
+    <div class="sheet-reset" id="resetAll">Сбросить отметки присутствия</div>
+  </div>
+</div>
+
+<!-- Модальное окно настроек -->
+<div class="overlay" id="configOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Управление жильцами</div>
+    
+    <div class="sheet-section-head">⚙️ Режим изменения имён</div>
+    <div class="sheet-btn-row" style="margin-bottom:18px;">
+      <div class="sheet-btn warn" id="toggleEditBtn">Включить редактирование</div>
+    </div>
+
+    <div class="sheet-section-head">📌 Сохраненный шаблон</div>
+    <div class="sheet-btn-row">
+      <div class="sheet-btn accent" id="saveTemplate">Сохранить как шаблон</div>
+      <div class="sheet-btn" id="loadTemplate">Загрузить шаблон</div>
+    </div>
+
+    <div class="sheet-section-head" style="margin-top:16px;">📄 Резервная копия (JSON)</div>
+    <div class="sheet-btn-row">
+      <div class="sheet-btn" id="exportConfig">Экспорт JSON</div>
+      <div class="sheet-btn" id="importConfig">Импорт JSON</div>
+    </div>
+    
+    <div id="jsonAreaWrap" style="display:none; margin-top:10px;">
+      <textarea class="json-area" id="jsonInput" placeholder="Вставьте JSON конфигурации здесь..."></textarea>
+      <div class="sheet-btn accent" id="applyImport">Применить конфигурацию</div>
+    </div>
+
+    <div class="sheet-close" id="closeConfigSheet">Сохранить и закрыть</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "floor-headcount-state-v2";
+  const TEMPLATE_KEY = "floor-headcount-template-v2";
+  let state = null;
+  let activeFloorId = null;
+  let openRoomIds = new Set();
+  let isEditMode = false;
+
+  const uid = () => Math.random().toString(36).slice(2, 10);
+
+  const appStorage = {
+    async get(key) {
+      try {
+        if (typeof window.storage !== 'undefined' && window.storage.get) {
+          const res = await window.storage.get(key, false);
+          if (res && res.value) return res.value;
+        }
+      } catch(e) {}
+      return localStorage.getItem(key);
+    },
+    async set(key, val) {
+      try {
+        if (typeof window.storage !== 'undefined' && window.storage.set) {
+          await window.storage.set(key, val, false);
+        }
+      } catch(e) {}
+      try { localStorage.setItem(key, val); } catch(e) {}
+    }
+  };
+
+  // Ровно 12 фиксированных комнат
+  function defaultState(){
+    const roomNames = ["534","533","532","531","524","523","522","521","514","513","512","511"];
+    const rooms = roomNames.map(n => ({
+      id: uid(),
+      name: "Комната " + n,
+      people: []
+    }));
+    const floorId = uid();
+    return {
+      floors: [ { id: floorId, name: "Этаж 5", rooms } ],
+      activeFloorId: floorId
+    };
+  }
+
+  async function load(){
+    try{
+      const data = await appStorage.get(STORAGE_KEY);
+      if(data){
+        state = JSON.parse(data);
+      } else {
+        state = defaultState();
+        await persist();
+      }
+    }catch(e){
+      state = defaultState();
+    }
+    activeFloorId = state.activeFloorId || (state.floors[0] && state.floors[0].id);
+  }
+
+  let saveTimer = null;
+  function persist(){
+    return new Promise((resolve) => {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        try{
+          state.activeFloorId = activeFloorId;
+          await appStorage.set(STORAGE_KEY, JSON.stringify(state));
+        }catch(e){ /* best effort */ }
+        resolve();
+      }, 100);
     });
-  </script>
+  }
 
+  function getFloor(){
+    return state.floors.find(f => f.id === activeFloorId) || state.floors[0];
+  }
+
+  function showToast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove("show"), 1800);
+  }
+
+  function copyText(text, okMsg){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(() => showToast(okMsg)).catch(() => fallbackCopy(text, okMsg));
+    } else {
+      fallbackCopy(text, okMsg);
+    }
+  }
+  function fallbackCopy(text, okMsg){
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); showToast(okMsg); }catch(e){ showToast("Не удалось скопировать"); }
+    document.body.removeChild(ta);
+  }
+
+  // ---------- РЕНДЕР ИНТЕРФЕЙСА ----------
+
+  function render(){
+    renderFloorTabs();
+    renderFloorHeader();
+    renderRooms();
+    document.getElementById("fabWrap").style.display = state.floors.length ? "flex" : "none";
+    
+    const settingsBtn = document.getElementById("settingsBtn");
+    if(isEditMode){
+      settingsBtn.classList.add("active-edit");
+    } else {
+      settingsBtn.classList.remove("active-edit");
+    }
+  }
+
+  function renderFloorTabs(){
+    const wrap = document.getElementById("floorTabs");
+    wrap.innerHTML = "";
+    state.floors.forEach(f => {
+      const el = document.createElement("div");
+      el.className = "floor-tab" + (f.id === activeFloorId ? " active" : "");
+      el.textContent = f.name;
+      el.onclick = () => { activeFloorId = f.id; openRoomIds.clear(); persist(); render(); };
+      wrap.appendChild(el);
+    });
+  }
+
+  function renderFloorHeader(){
+    const floor = getFloor();
+    const titleEl = document.getElementById("floorTitle");
+    const subEl = document.getElementById("floorSub");
+    if(!floor){
+      titleEl.value = "Нет этажей";
+      subEl.textContent = "";
+      return;
+    }
+    if(titleEl.value !== floor.name) titleEl.value = floor.name;
+    const total = floor.rooms.reduce((s,r) => s + r.people.length, 0);
+    const roomCount = floor.rooms.length;
+    subEl.innerHTML = roomCount + " комнат · " + total + " чел." + (isEditMode ? ' <span class="edit-badge">Редактирование</span>' : '');
+
+    titleEl.readOnly = !isEditMode;
+
+    titleEl.onchange = () => {
+      const val = titleEl.value.trim() || "Этаж";
+      floor.name = val;
+      titleEl.value = val;
+      persist(); renderFloorTabs();
+    };
+    titleEl.onkeydown = (e) => { if(e.key === "Enter"){ titleEl.blur(); } };
+  }
+
+  function roomStatus(room){
+    if(room.people.length === 0) return { cls: "empty", text: "Пусто" };
+    const absent = room.people.filter(p => !p.present).length;
+    if(absent === 0) return { cls: "full", text: room.people.length + " на месте" };
+    return { cls: "partial", text: absent + " отсутств." };
+  }
+
+  function renderRooms(){
+    const wrap = document.getElementById("rooms");
+    wrap.innerHTML = "";
+    const floor = getFloor();
+    if(!floor || floor.rooms.length === 0) return;
+
+    floor.rooms.forEach(room => {
+      const card = document.createElement("div");
+      card.className = "room-card" + (openRoomIds.has(room.id) ? " open" : "");
+
+      const head = document.createElement("div");
+      head.className = "room-head";
+
+      const chevron = document.createElement("div");
+      chevron.className = "chevron";
+      chevron.textContent = "›";
+
+      const nameEl = document.createElement("input");
+      nameEl.className = "room-name-input";
+      nameEl.spellcheck = false;
+      nameEl.setAttribute("enterkeyhint", "done");
+      nameEl.value = room.name;
+      nameEl.readOnly = !isEditMode;
+      nameEl.onclick = (e) => e.stopPropagation();
+      nameEl.onchange = () => {
+        room.name = nameEl.value.trim() || "Комната";
+        nameEl.value = room.name;
+        persist(); renderFloorHeader();
+      };
+      nameEl.onkeydown = (e) => { if(e.key === "Enter"){ nameEl.blur(); } };
+
+      const status = roomStatus(room);
+      const statusEl = document.createElement("div");
+      statusEl.className = "room-status " + status.cls;
+      statusEl.textContent = status.text;
+
+      head.appendChild(chevron);
+      head.appendChild(nameEl);
+      head.appendChild(statusEl);
+
+      head.onclick = () => {
+        if(openRoomIds.has(room.id)) openRoomIds.delete(room.id);
+        else openRoomIds.add(room.id);
+        render();
+      };
+
+      const body = document.createElement("div");
+      body.className = "room-body";
+
+      room.people.forEach(person => {
+        body.appendChild(renderPersonRow(room, person));
+      });
+
+      if(isEditMode){
+        const addRow = document.createElement("div");
+        addRow.className = "add-row";
+        addRow.textContent = "＋ Добавить человека";
+        addRow.onclick = (e) => {
+          e.stopPropagation();
+          const p = { id: uid(), name: "Новый человек", present: true, weekend: false };
+          room.people.push(p);
+          openRoomIds.add(room.id);
+          persist(); render();
+          setTimeout(() => {
+            const el = document.querySelector('[data-person-id="' + p.id + '"]');
+            if(el) el.select();
+          }, 30);
+        };
+        body.appendChild(addRow);
+      }
+
+      card.appendChild(head);
+      card.appendChild(body);
+      wrap.appendChild(card);
+    });
+  }
+
+  function renderPersonRow(room, person){
+    const row = document.createElement("div");
+    row.className = "person-row";
+
+    const nameEl = document.createElement("input");
+    nameEl.className = "person-name-input";
+    nameEl.spellcheck = false;
+    nameEl.setAttribute("enterkeyhint", "done");
+    nameEl.value = person.name;
+    nameEl.readOnly = !isEditMode;
+    nameEl.setAttribute("data-person-id", person.id);
+    nameEl.onclick = (e) => e.stopPropagation();
+    nameEl.onchange = () => {
+      person.name = nameEl.value.trim() || "Без имени";
+      nameEl.value = person.name;
+      persist();
+    };
+    nameEl.onkeydown = (e) => { if(e.key === "Enter"){ nameEl.blur(); } };
+
+    const presentWrap = document.createElement("label");
+    presentWrap.className = "chk-wrap";
+    presentWrap.onclick = (e) => e.stopPropagation();
+    const presentChk = document.createElement("input");
+    presentChk.type = "checkbox";
+    presentChk.className = "chk present";
+    presentChk.checked = person.present;
+    presentChk.onchange = () => {
+      person.present = presentChk.checked;
+      persist(); renderRooms();
+    };
+    presentWrap.appendChild(presentChk);
+
+    const weekendWrap = document.createElement("label");
+    weekendWrap.className = "chk-wrap";
+    weekendWrap.onclick = (e) => e.stopPropagation();
+    const weekendChk = document.createElement("input");
+    weekendChk.type = "checkbox";
+    weekendChk.className = "chk weekend";
+    weekendChk.checked = person.weekend;
+    weekendChk.onchange = () => {
+      person.weekend = weekendChk.checked;
+      persist();
+    };
+    weekendWrap.appendChild(weekendChk);
+
+    row.appendChild(nameEl);
+    row.appendChild(presentWrap);
+    row.appendChild(weekendWrap);
+
+    if(isEditMode){
+      const delEl = document.createElement("div");
+      delEl.className = "person-del";
+      delEl.textContent = "✕";
+      delEl.onclick = (e) => {
+        e.stopPropagation();
+        room.people = room.people.filter(p => p.id !== person.id);
+        persist(); render();
+      };
+      row.appendChild(delEl);
+    }
+
+    return row;
+  }
+
+  // ---------- ОТЧЁТЫ И ЭКСПОРТ ----------
+
+  function buildReport(){
+    const floor = getFloor();
+    const total = floor.rooms.reduce((s,r) => s + r.people.length, 0);
+    const absentByRoom = [];
+    const weekendByRoom = [];
+    floor.rooms.forEach(r => {
+      const absent = r.people.filter(p => !p.present).map(p => p.name);
+      const weekend = r.people.filter(p => p.weekend).map(p => p.name);
+      if(absent.length) absentByRoom.push({ room: r.name, names: absent });
+      if(weekend.length) weekendByRoom.push({ room: r.name, names: weekend });
+    });
+    return { floorName: floor.name, total, absentByRoom, weekendByRoom };
+  }
+
+  function reportToText(r){
+    let lines = [];
+    lines.push(r.floorName.toUpperCase());
+    lines.push("ИТОГ: " + r.total + " чел.");
+    lines.push("");
+    lines.push("ОТСУТСТВУЮТ:");
+    if(r.absentByRoom.length === 0){ lines.push("Нет"); }
+    else r.absentByRoom.forEach(g => lines.push(g.room + ": " + g.names.join(", ")));
+    lines.push("");
+    lines.push("ВЫХОДНЫЕ:");
+    if(r.weekendByRoom.length === 0){ lines.push("Нет"); }
+    else r.weekendByRoom.forEach(g => lines.push(g.room + ": " + g.names.join(", ")));
+    return lines.join("\n");
+  }
+  function groupsToText(groups){
+    if(groups.length === 0) return "Нет";
+    return groups.map(g => g.room + ": " + g.names.join(", ")).join("\n");
+  }
+
+  function openReport(){
+    const r = buildReport();
+    const el = document.getElementById("reportContent");
+    let html = '<div class="report-card">';
+    html += '<div class="report-total">ИТОГ: ' + r.total + ' чел.</div>';
+    html += '<div class="report-section-title">ОТСУТСТВУЮТ</div>';
+    html += r.absentByRoom.length === 0
+      ? '<div class="report-empty" style="color:var(--text-mid); font-size:14px;">Нет</div>'
+      : r.absentByRoom.map(g => '<div class="report-line"><b>' + escapeHtml(g.room) + ':</b> ' + escapeHtml(g.names.join(", ")) + '</div>').join("");
+    html += '<div class="report-section-title">ВЫХОДНЫЕ</div>';
+    html += r.weekendByRoom.length === 0
+      ? '<div class="report-empty" style="color:var(--text-mid); font-size:14px;">Нет</div>'
+      : r.weekendByRoom.map(g => '<div class="report-line"><b>' + escapeHtml(g.room) + ':</b> ' + escapeHtml(g.names.join(", ")) + '</div>').join("");
+    html += '</div>';
+    el.innerHTML = html;
+
+    document.getElementById("reportOverlay").classList.add("show");
+
+    document.getElementById("copyAbsent").onclick = () => copyText(groupsToText(r.absentByRoom), "Список отсутствующих скопирован");
+    document.getElementById("copyWeekend").onclick = () => copyText(groupsToText(r.weekendByRoom), "Список выходных скопирован");
+    document.getElementById("copyAll").onclick = () => copyText(reportToText(r), "Отчёт скопирован");
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function closeReport(){
+    document.getElementById("reportOverlay").classList.remove("show");
+  }
+
+  // ---------- КОНФИГУРАЦИЯ ----------
+
+  function updateEditBtnText(){
+    const btn = document.getElementById("toggleEditBtn");
+    if(isEditMode){
+      btn.textContent = "Завершить редактирование";
+      btn.className = "sheet-btn accent";
+    } else {
+      btn.textContent = "Включить редактирование";
+      btn.className = "sheet-btn warn";
+    }
+  }
+
+  function openConfig(){
+    document.getElementById("jsonAreaWrap").style.display = "none";
+    updateEditBtnText();
+    document.getElementById("configOverlay").classList.add("show");
+  }
+
+  async function closeConfig(){
+    document.getElementById("configOverlay").classList.remove("show");
+    await persist();
+    render();
+  }
+
+  async function saveAsTemplate(){
+    try {
+      await appStorage.set(TEMPLATE_KEY, JSON.stringify(state));
+      showToast("Конфигурация сохранена!");
+    } catch(e) {
+      showToast("Ошибка сохранения");
+    }
+  }
+
+  async function loadFromTemplate(){
+    try {
+      const data = await appStorage.get(TEMPLATE_KEY);
+      if(!data){
+        showToast("Шаблон не найден");
+        return;
+      }
+      if(confirm("Загрузить сохраненную конфигурацию?")){
+        state = JSON.parse(data);
+        activeFloorId = state.activeFloorId || state.floors[0].id;
+        await persist();
+        render();
+        closeConfig();
+        showToast("Шаблон загружен");
+      }
+    } catch(e) {
+      showToast("Ошибка загрузки");
+    }
+  }
+
+  function exportConfigText(){
+    const wrap = document.getElementById("jsonAreaWrap");
+    const textarea = document.getElementById("jsonInput");
+    const json = JSON.stringify(state, null, 2);
+    textarea.value = json;
+    wrap.style.display = "block";
+    copyText(json, "JSON скопирован");
+  }
+
+  function importConfigText(){
+    const wrap = document.getElementById("jsonAreaWrap");
+    const textarea = document.getElementById("jsonInput");
+    textarea.value = "";
+    wrap.style.display = "block";
+    textarea.focus();
+    showToast("Вставьте JSON в поле ниже");
+  }
+
+  async function applyImportedConfig(){
+    const textarea = document.getElementById("jsonInput");
+    try {
+      const parsed = JSON.parse(textarea.value.trim());
+      if(parsed && Array.isArray(parsed.floors)){
+        state = parsed;
+        activeFloorId = state.activeFloorId || state.floors[0].id;
+        await persist();
+        render();
+        closeConfig();
+        showToast("Конфигурация применена!");
+      } else {
+        showToast("Некорректный JSON");
+      }
+    } catch(e) {
+      showToast("Ошибка чтения JSON");
+    }
+  }
+
+  // ---------- ИНИЦИАЛИЗАЦИЯ ----------
+
+  async function init(){
+    await load();
+    document.getElementById("boot").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    render();
+
+    document.getElementById("reportBtn").onclick = openReport;
+    document.getElementById("closeReportSheet").onclick = closeReport;
+    document.getElementById("reportOverlay").onclick = (e) => {
+      if(e.target.id === "reportOverlay") closeReport();
+    };
+    document.getElementById("resetAll").onclick = () => {
+      if(confirm("Сбросить отметки на этаже?")){
+        const floor = getFloor();
+        floor.rooms.forEach(r => r.people.forEach(p => { p.present = true; p.weekend = false; }));
+        persist(); closeReport(); render();
+        showToast("Отметки сброшены");
+      }
+    };
+
+    document.getElementById("settingsBtn").onclick = openConfig;
+    document.getElementById("closeConfigSheet").onclick = closeConfig;
+    document.getElementById("configOverlay").onclick = (e) => {
+      if(e.target.id === "configOverlay") closeConfig();
+    };
+
+    document.getElementById("toggleEditBtn").onclick = () => {
+      isEditMode = !isEditMode;
+      updateEditBtnText();
+      render();
+    };
+
+    document.getElementById("saveTemplate").onclick = saveAsTemplate;
+    document.getElementById("loadTemplate").onclick = loadFromTemplate;
+    document.getElementById("exportConfig").onclick = exportConfigText;
+    document.getElementById("importConfig").onclick = importConfigText;
+    document.getElementById("applyImport").onclick = applyImportedConfig;
+  }
+
+  init();
+})();
+</script>
 </body>
 </html>
