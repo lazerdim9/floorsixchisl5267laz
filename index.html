@@ -34,16 +34,17 @@
     touch-action: manipulation;
   }
 
-  /* Фикс белой полосы и фризов при скролле */
-  html, body {
+  /* Исправление вертикального скролла */
+  html {
     height: 100%;
     background-color: var(--bg-main);
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
   }
 
   body {
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
     color: var(--text-hi);
     background: 
@@ -52,8 +53,6 @@
       radial-gradient(800px at 50% 110%, rgba(48, 209, 88, 0.12), transparent 50%),
       var(--bg-main);
     background-attachment: fixed;
-    min-height: 100vh;
-    overscroll-behavior-y: none;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -182,7 +181,6 @@
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
     overflow: hidden;
-    /* Оптимизация производительности: плавные переходы без размытия */
     will-change: transform;
     transition: background 0.2s ease, border-color 0.2s ease;
   }
@@ -195,22 +193,18 @@
     cursor: pointer;
   }
 
-  .room-name-input {
+  .room-name-text {
     flex: 1;
     font-size: 18px;
     font-weight: 650;
     letter-spacing: -0.01em;
-    outline: none;
-    background: none;
-    border: none;
     color: var(--text-hi);
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-family: inherit;
+    user-select: none;
   }
-  .room-name-input[readonly] { pointer-events: none; }
 
   .room-status {
     font-size: 13px;
@@ -264,7 +258,7 @@
 
   .chk-wrap { display: flex; align-items: center; }
 
-  /* ЖИДКИЕ ЧЕКБОКСЫ (iOS style) */
+  /* Чекбоксы в стиле iOS */
   .chk {
     appearance: none;
     -webkit-appearance: none;
@@ -615,6 +609,7 @@
   let isEditMode = false;
 
   const uid = () => Math.random().toString(36).slice(2, 10);
+  const TARGET_ROOMS = ["534","533","532","531","524","523","522","521","514","513","512","511"];
 
   const appStorage = {
     async get(key) {
@@ -636,10 +631,8 @@
     }
   };
 
-  // Ровно 12 фиксированных комнат
   function defaultState(){
-    const roomNames = ["534","533","532","531","524","523","522","521","514","513","512","511"];
-    const rooms = roomNames.map(n => ({
+    const rooms = TARGET_ROOMS.map(n => ({
       id: uid(),
       name: "Комната " + n,
       people: []
@@ -656,6 +649,17 @@
       const data = await appStorage.get(STORAGE_KEY);
       if(data){
         state = JSON.parse(data);
+        // Автоматическая синхронизация до 12 комнат
+        const floor = state.floors && state.floors[0];
+        if(floor) {
+          TARGET_ROOMS.forEach(name => {
+            const fullName = "Комната " + name;
+            const exists = floor.rooms.some(r => r.name === fullName || r.name === name);
+            if(!exists) {
+              floor.rooms.push({ id: uid(), name: fullName, people: [] });
+            }
+          });
+        }
       } else {
         state = defaultState();
         await persist();
@@ -784,19 +788,10 @@
       chevron.className = "chevron";
       chevron.textContent = "›";
 
-      const nameEl = document.createElement("input");
-      nameEl.className = "room-name-input";
-      nameEl.spellcheck = false;
-      nameEl.setAttribute("enterkeyhint", "done");
-      nameEl.value = room.name;
-      nameEl.readOnly = true;
-      nameEl.onclick = (e) => e.stopPropagation();
-      nameEl.onchange = () => {
-        room.name = nameEl.value.trim() || "Комната";
-        nameEl.value = room.name;
-        persist(); renderFloorHeader();
-      };
-      nameEl.onkeydown = (e) => { if(e.key === "Enter"){ nameEl.blur(); } };
+      // Статичный текст вместо редактируемого инпута
+      const nameEl = document.createElement("div");
+      nameEl.className = "room-name-text";
+      nameEl.textContent = room.name;
 
       const status = roomStatus(room);
       const statusEl = document.createElement("div");
@@ -819,6 +814,29 @@
       room.people.forEach(person => {
         body.appendChild(renderPersonRow(room, person));
       });
+
+      if(isEditMode){
+        const addRow = document.createElement("div");
+        addRow.className = "add-row";
+        addRow.textContent = "＋ Добавить человека";
+        addRow.onclick = (e) => {
+          e.stopPropagation();
+          const p = { id: uid(), name: "Новый человек", present: true, weekend: false };
+          room.people.push(p);
+          openRoomIds.add(room.id);
+          persist(); render();
+          setTimeout(() => {
+            const el = document.querySelector('[data-person-id="' + p.id + '"]');
+            if(el) el.select();
+          }, 30);
+        };
+        body.appendChild(addRow);
+      }
+
+      card.appendChild(head);
+      card.appendChild(body);
+      wrap.appendChild(card);
+    });
   }
 
   function renderPersonRow(room, person){
