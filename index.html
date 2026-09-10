@@ -785,10 +785,10 @@
   }
 
   function roomStatus(room){
-    if(room.people.length === 0) return { cls: "empty", text: "⚪ Пусто" };
+    if(room.people.length === 0) return { cls: "empty", text: "Пусто" };
     const absent = room.people.filter(p => !p.present).length;
-    if(absent === 0) return { cls: "full", text: "🟢 " + room.people.length + " на месте" };
-    return { cls: "partial", text: "🔴 " + absent + " отсутств." };
+    if(absent === 0) return { cls: "full", text: + room.people.length + " на месте" };
+    return { cls: "partial", text: absent + " отсутств." };
   }
 
   function renderRooms(){
