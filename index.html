@@ -34,7 +34,6 @@
     touch-action: manipulation;
   }
 
-  /* Исправление вертикального скролла */
   html {
     height: 100%;
     background-color: var(--bg-main);
@@ -188,8 +187,8 @@
   .room-head {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 18px;
+    gap: 10px;
+    padding: 14px 16px;
     cursor: pointer;
   }
 
@@ -258,7 +257,6 @@
 
   .chk-wrap { display: flex; align-items: center; }
 
-  /* Чекбоксы в стиле iOS */
   .chk {
     appearance: none;
     -webkit-appearance: none;
@@ -283,6 +281,12 @@
     background: linear-gradient(135deg, #FF9F0A, #C67400);
     border-color: rgba(255, 255, 255, 0.4);
     box-shadow: 0 2px 8px rgba(255, 159, 10, 0.4);
+  }
+  /* Галочка массового отсутствия в заголовке комнаты */
+  .chk.room-absent:checked {
+    background: linear-gradient(135deg, #FF453A, #C61A0F);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 2px 8px rgba(255, 69, 58, 0.4);
   }
   .chk:checked::after {
     content: "✓";
@@ -399,7 +403,8 @@
     padding: 16px;
     margin-bottom: 16px;
   }
-  .report-total { font-size: 18px; font-weight: 750; margin-bottom: 12px; }
+  .report-total { font-size: 16px; font-weight: 600; color: var(--text-mid); }
+  .report-present { font-size: 20px; font-weight: 800; color: var(--ok); margin-top: 4px; margin-bottom: 12px; }
   .report-section-title {
     font-size: 12px;
     font-weight: 700;
@@ -611,6 +616,12 @@
   const uid = () => Math.random().toString(36).slice(2, 10);
   const TARGET_ROOMS = ["534","533","532","531","524","523","522","521","514","513","512","511"];
 
+  function getLastName(fullName) {
+    if (!fullName) return "";
+    const parts = fullName.trim().split(/\s+/);
+    return parts[0] || fullName;
+  }
+
   const appStorage = {
     async get(key) {
       try {
@@ -649,7 +660,6 @@
       const data = await appStorage.get(STORAGE_KEY);
       if(data){
         state = JSON.parse(data);
-        // Автоматическая синхронизация до 12 комнат
         const floor = state.floors && state.floors[0];
         if(floor) {
           TARGET_ROOMS.forEach(name => {
@@ -788,7 +798,6 @@
       chevron.className = "chevron";
       chevron.textContent = "›";
 
-      // Статичный текст вместо редактируемого инпута
       const nameEl = document.createElement("div");
       nameEl.className = "room-name-text";
       nameEl.textContent = room.name;
@@ -798,9 +807,29 @@
       statusEl.className = "room-status " + status.cls;
       statusEl.textContent = status.text;
 
+      // Галочка массового отметки отсутствия всех в комнате
+      const allAbsent = room.people.length > 0 && room.people.every(p => !p.present);
+      const roomChkWrap = document.createElement("label");
+      roomChkWrap.className = "chk-wrap";
+      roomChkWrap.title = "Отметить всю комнату отсутствующей";
+      roomChkWrap.onclick = (e) => e.stopPropagation();
+
+      const roomChk = document.createElement("input");
+      roomChk.type = "checkbox";
+      roomChk.className = "chk room-absent";
+      roomChk.checked = allAbsent;
+      roomChk.onchange = () => {
+        const markAsAbsent = roomChk.checked;
+        room.people.forEach(p => { p.present = !markAsAbsent; });
+        persist();
+        renderRooms();
+      };
+      roomChkWrap.appendChild(roomChk);
+
       head.appendChild(chevron);
       head.appendChild(nameEl);
       head.appendChild(statusEl);
+      head.appendChild(roomChkWrap);
 
       head.onclick = () => {
         if(openRoomIds.has(room.id)) openRoomIds.delete(room.id);
@@ -821,7 +850,7 @@
         addRow.textContent = "＋ Добавить человека";
         addRow.onclick = (e) => {
           e.stopPropagation();
-          const p = { id: uid(), name: "Новый человек", present: true, weekend: false };
+          const p = { id: uid(), name: "Фамилия", present: true, weekend: false };
           room.people.push(p);
           openRoomIds.add(room.id);
           persist(); render();
@@ -910,19 +939,27 @@
     const total = floor.rooms.reduce((s,r) => s + r.people.length, 0);
     const absentByRoom = [];
     const weekendByRoom = [];
+    let totalAbsent = 0;
+
     floor.rooms.forEach(r => {
-      const absent = r.people.filter(p => !p.present).map(p => p.name);
-      const weekend = r.people.filter(p => p.weekend).map(p => p.name);
+      const absent = r.people.filter(p => !p.present).map(p => getLastName(p.name));
+      const weekend = r.people.filter(p => p.weekend).map(p => getLastName(p.name));
+      
+      totalAbsent += absent.length;
       if(absent.length) absentByRoom.push({ room: r.name, names: absent });
       if(weekend.length) weekendByRoom.push({ room: r.name, names: weekend });
     });
-    return { floorName: floor.name, total, absentByRoom, weekendByRoom };
+
+    const presentNow = total - totalAbsent;
+
+    return { floorName: floor.name, total, presentNow, absentByRoom, weekendByRoom };
   }
 
   function reportToText(r){
     let lines = [];
     lines.push(r.floorName.toUpperCase());
-    lines.push("ИТОГ: " + r.total + " чел.");
+    lines.push("ВСЕГО: " + r.total + " чел.");
+    lines.push("СЕЙЧАС НА ЭТАЖЕ: " + r.presentNow + " чел.");
     lines.push("");
     lines.push("ОТСУТСТВУЮТ:");
     if(r.absentByRoom.length === 0){ lines.push("Нет"); }
@@ -933,16 +970,22 @@
     else r.weekendByRoom.forEach(g => lines.push(g.room + ": " + g.names.join(", ")));
     return lines.join("\n");
   }
-  function groupsToText(groups){
+
+  function getFlatNamesList(groups){
     if(groups.length === 0) return "Нет";
-    return groups.map(g => g.room + ": " + g.names.join(", ")).join("\n");
+    let allNames = [];
+    groups.forEach(g => {
+      allNames = allNames.concat(g.names);
+    });
+    return allNames.join(", ");
   }
 
   function openReport(){
     const r = buildReport();
     const el = document.getElementById("reportContent");
     let html = '<div class="report-card">';
-    html += '<div class="report-total">ИТОГ: ' + r.total + ' чел.</div>';
+    html += '<div class="report-total">Всего по списку: ' + r.total + ' чел.</div>';
+    html += '<div class="report-present">Всё ещё на этаже: ' + r.presentNow + ' чел.</div>';
     html += '<div class="report-section-title">ОТСУТСТВУЮТ</div>';
     html += r.absentByRoom.length === 0
       ? '<div class="report-empty" style="color:var(--text-mid); font-size:14px;">Нет</div>'
@@ -956,9 +999,9 @@
 
     document.getElementById("reportOverlay").classList.add("show");
 
-    document.getElementById("copyAbsent").onclick = () => copyText(groupsToText(r.absentByRoom), "Список отсутствующих скопирован");
-    document.getElementById("copyWeekend").onclick = () => copyText(groupsToText(r.weekendByRoom), "Список выходных скопирован");
-    document.getElementById("copyAll").onclick = () => copyText(reportToText(r), "Отчёт скопирован");
+    document.getElementById("copyAbsent").onclick = () => copyText(getFlatNamesList(r.absentByRoom), "Фамилии отсутствующих скопированы");
+    document.getElementById("copyWeekend").onclick = () => copyText(getFlatNamesList(r.weekendByRoom), "Фамилии выходных скопированы");
+    document.getElementById("copyAll").onclick = () => copyText(reportToText(r), "Полный отчёт скопирован");
   }
 
   function escapeHtml(s){
