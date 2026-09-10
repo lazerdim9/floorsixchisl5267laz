@@ -212,6 +212,9 @@
     padding: 4px 10px;
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
   .room-status.empty { color: var(--danger); background: rgba(255, 69, 58, 0.12); }
   .room-status.full { color: var(--ok); background: rgba(48, 209, 88, 0.12); }
@@ -282,7 +285,6 @@
     border-color: rgba(255, 255, 255, 0.4);
     box-shadow: 0 2px 8px rgba(255, 159, 10, 0.4);
   }
-  /* Галочка массового отсутствия в заголовке комнаты */
   .chk.room-absent:checked {
     background: linear-gradient(135deg, #FF453A, #C61A0F);
     border-color: rgba(255, 255, 255, 0.4);
@@ -344,6 +346,10 @@
     -webkit-backdrop-filter: blur(15px);
     cursor: pointer;
     transition: transform 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
   .fab:active { transform: scale(0.98); }
 
@@ -436,6 +442,10 @@
     border: 1px solid var(--glass-border);
     color: var(--text-hi);
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
   .sheet-btn.accent {
     background: rgba(10, 132, 255, 0.2);
@@ -528,7 +538,7 @@
 </head>
 <body>
 
-<div id="boot" class="boot">Загрузка интерфейса…</div>
+<div id="boot" class="boot">⏳ Загрузка интерфейса…</div>
 
 <div class="app" id="app" style="display:none">
 
@@ -539,7 +549,7 @@
         <input class="floor-title-input" id="floorTitle" spellcheck="false" enterkeyhint="done">
         <div class="floor-sub" id="floorSub"></div>
       </div>
-      <button class="settings-btn" id="settingsBtn" title="Настройки">⚙</button>
+      <button class="settings-btn" id="settingsBtn" title="Настройки">⚙️</button>
     </div>
   </div>
 
@@ -548,7 +558,7 @@
 </div>
 
 <div class="fab-wrap" id="fabWrap" style="display:none">
-  <div class="fab" id="reportBtn">Сформировать отчёт</div>
+  <div class="fab" id="reportBtn">📋 Сформировать отчёт</div>
 </div>
 
 <!-- Модальное окно отчёта -->
@@ -558,13 +568,13 @@
     <div id="reportContent"></div>
     
     <div class="sheet-btn-row">
-      <div class="sheet-btn" id="copyAbsent">Копия отсутств.</div>
-      <div class="sheet-btn" id="copyWeekend">Копия выход.</div>
+      <div class="sheet-btn" id="copyAbsent">🚫 Копия отсутств.</div>
+      <div class="sheet-btn" id="copyWeekend">🏠 Копия выход.</div>
     </div>
-    <div class="sheet-btn" id="copyAll" style="margin-bottom:10px;">Скопировать весь отчёт</div>
+    <div class="sheet-btn" id="copyAll" style="margin-bottom:10px;">📄 Скопировать весь отчёт</div>
 
     <div class="sheet-close" id="closeReportSheet">Закрыть</div>
-    <div class="sheet-reset" id="resetAll">Сбросить отметки присутствия</div>
+    <div class="sheet-reset" id="resetAll">🔄 Сбросить отметки присутствия</div>
   </div>
 </div>
 
@@ -572,28 +582,28 @@
 <div class="overlay" id="configOverlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Управление жильцами</div>
+    <div class="sheet-title">👥 Управление жильцами</div>
     
     <div class="sheet-section-head">⚙️ Режим изменения имён</div>
     <div class="sheet-btn-row" style="margin-bottom:18px;">
-      <div class="sheet-btn warn" id="toggleEditBtn">Включить редактирование</div>
+      <div class="sheet-btn warn" id="toggleEditBtn">✏️ Включить редактирование</div>
     </div>
 
     <div class="sheet-section-head">📌 Сохраненный шаблон</div>
     <div class="sheet-btn-row">
-      <div class="sheet-btn accent" id="saveTemplate">Сохранить как шаблон</div>
-      <div class="sheet-btn" id="loadTemplate">Загрузить шаблон</div>
+      <div class="sheet-btn accent" id="saveTemplate">💾 Сохранить шаблон</div>
+      <div class="sheet-btn" id="loadTemplate">📂 Загрузить шаблон</div>
     </div>
 
     <div class="sheet-section-head" style="margin-top:16px;">📄 Резервная копия (JSON)</div>
     <div class="sheet-btn-row">
-      <div class="sheet-btn" id="exportConfig">Экспорт JSON</div>
-      <div class="sheet-btn" id="importConfig">Импорт JSON</div>
+      <div class="sheet-btn" id="exportConfig">📤 Экспорт JSON</div>
+      <div class="sheet-btn" id="importConfig">📥 Импорт JSON</div>
     </div>
     
     <div id="jsonAreaWrap" style="display:none; margin-top:10px;">
       <textarea class="json-area" id="jsonInput" placeholder="Вставьте JSON конфигурации здесь..."></textarea>
-      <div class="sheet-btn accent" id="applyImport">Применить конфигурацию</div>
+      <div class="sheet-btn accent" id="applyImport">✅ Применить конфигурацию</div>
     </div>
 
     <div class="sheet-close" id="closeConfigSheet">Сохранить и закрыть</div>
@@ -717,7 +727,7 @@
     const ta = document.createElement("textarea");
     ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
     document.body.appendChild(ta); ta.select();
-    try{ document.execCommand("copy"); showToast(okMsg); }catch(e){ showToast("Не удалось скопировать"); }
+    try{ document.execCommand("copy"); showToast(okMsg); }catch(e){ showToast("⚠️ Не удалось скопировать"); }
     document.body.removeChild(ta);
   }
 
@@ -761,7 +771,7 @@
     if(titleEl.value !== floor.name) titleEl.value = floor.name;
     const total = floor.rooms.reduce((s,r) => s + r.people.length, 0);
     const roomCount = floor.rooms.length;
-    subEl.innerHTML = roomCount + " комнат · " + total + " чел." + (isEditMode ? ' <span class="edit-badge">Редактирование</span>' : '');
+    subEl.innerHTML = "🚪 " + roomCount + " комнат · 👥 " + total + " чел." + (isEditMode ? ' <span class="edit-badge">✏️ Редактирование</span>' : '');
 
     titleEl.readOnly = !isEditMode;
 
@@ -775,10 +785,10 @@
   }
 
   function roomStatus(room){
-    if(room.people.length === 0) return { cls: "empty", text: "Пусто" };
+    if(room.people.length === 0) return { cls: "empty", text: "⚪ Пусто" };
     const absent = room.people.filter(p => !p.present).length;
-    if(absent === 0) return { cls: "full", text: room.people.length + " на месте" };
-    return { cls: "partial", text: absent + " отсутств." };
+    if(absent === 0) return { cls: "full", text: "🟢 " + room.people.length + " на месте" };
+    return { cls: "partial", text: "🔴 " + absent + " отсутств." };
   }
 
   function renderRooms(){
@@ -847,7 +857,7 @@
       if(isEditMode){
         const addRow = document.createElement("div");
         addRow.className = "add-row";
-        addRow.textContent = "＋ Добавить человека";
+        addRow.textContent = "➕ Добавить человека";
         addRow.onclick = (e) => {
           e.stopPropagation();
           const p = { id: uid(), name: "Фамилия", present: true, weekend: false };
@@ -920,7 +930,7 @@
     if(isEditMode){
       const delEl = document.createElement("div");
       delEl.className = "person-del";
-      delEl.textContent = "✕";
+      delEl.textContent = "🗑️";
       delEl.onclick = (e) => {
         e.stopPropagation();
         room.people = room.people.filter(p => p.id !== person.id);
@@ -984,13 +994,13 @@
     const r = buildReport();
     const el = document.getElementById("reportContent");
     let html = '<div class="report-card">';
-    html += '<div class="report-total">Всего по списку: ' + r.total + ' чел.</div>';
-    html += '<div class="report-present">Всё ещё на этаже: ' + r.presentNow + ' чел.</div>';
-    html += '<div class="report-section-title">ОТСУТСТВУЮТ</div>';
+    html += '<div class="report-total">👥 Всего по списку: ' + r.total + ' чел.</div>';
+    html += '<div class="report-present">🟢 Всё ещё на этаже: ' + r.presentNow + ' чел.</div>';
+    html += '<div class="report-section-title">🚫 ОТСУТСТВУЮТ</div>';
     html += r.absentByRoom.length === 0
       ? '<div class="report-empty" style="color:var(--text-mid); font-size:14px;">Нет</div>'
       : r.absentByRoom.map(g => '<div class="report-line"><b>' + escapeHtml(g.room) + ':</b> ' + escapeHtml(g.names.join(", ")) + '</div>').join("");
-    html += '<div class="report-section-title">ВЫХОДНЫЕ</div>';
+    html += '<div class="report-section-title">🏠 ВЫХОДНЫЕ</div>';
     html += r.weekendByRoom.length === 0
       ? '<div class="report-empty" style="color:var(--text-mid); font-size:14px;">Нет</div>'
       : r.weekendByRoom.map(g => '<div class="report-line"><b>' + escapeHtml(g.room) + ':</b> ' + escapeHtml(g.names.join(", ")) + '</div>').join("");
@@ -999,9 +1009,9 @@
 
     document.getElementById("reportOverlay").classList.add("show");
 
-    document.getElementById("copyAbsent").onclick = () => copyText(getFlatNamesList(r.absentByRoom), "Фамилии отсутствующих скопированы");
-    document.getElementById("copyWeekend").onclick = () => copyText(getFlatNamesList(r.weekendByRoom), "Фамилии выходных скопированы");
-    document.getElementById("copyAll").onclick = () => copyText(reportToText(r), "Полный отчёт скопирован");
+    document.getElementById("copyAbsent").onclick = () => copyText(getFlatNamesList(r.absentByRoom), "📋 Фамилии отсутствующих скопированы");
+    document.getElementById("copyWeekend").onclick = () => copyText(getFlatNamesList(r.weekendByRoom), "📋 Фамилии выходных скопированы");
+    document.getElementById("copyAll").onclick = () => copyText(reportToText(r), "📄 Полный отчёт скопирован");
   }
 
   function escapeHtml(s){
@@ -1017,10 +1027,10 @@
   function updateEditBtnText(){
     const btn = document.getElementById("toggleEditBtn");
     if(isEditMode){
-      btn.textContent = "Завершить редактирование";
+      btn.textContent = "✔️ Завершить редактирование";
       btn.className = "sheet-btn accent";
     } else {
-      btn.textContent = "Включить редактирование";
+      btn.textContent = "✏️ Включить редактирование";
       btn.className = "sheet-btn warn";
     }
   }
@@ -1040,9 +1050,9 @@
   async function saveAsTemplate(){
     try {
       await appStorage.set(TEMPLATE_KEY, JSON.stringify(state));
-      showToast("Конфигурация сохранена!");
+      showToast("💾 Конфигурация сохранена!");
     } catch(e) {
-      showToast("Ошибка сохранения");
+      showToast("⚠️ Ошибка сохранения");
     }
   }
 
@@ -1050,7 +1060,7 @@
     try {
       const data = await appStorage.get(TEMPLATE_KEY);
       if(!data){
-        showToast("Шаблон не найден");
+        showToast("⚠️ Шаблон не найден");
         return;
       }
       if(confirm("Загрузить сохраненную конфигурацию?")){
@@ -1059,10 +1069,10 @@
         await persist();
         render();
         closeConfig();
-        showToast("Шаблон загружен");
+        showToast("📂 Шаблон загружен");
       }
     } catch(e) {
-      showToast("Ошибка загрузки");
+      showToast("⚠️ Ошибка загрузки");
     }
   }
 
@@ -1072,7 +1082,7 @@
     const json = JSON.stringify(state, null, 2);
     textarea.value = json;
     wrap.style.display = "block";
-    copyText(json, "JSON скопирован");
+    copyText(json, "📋 JSON скопирован");
   }
 
   function importConfigText(){
@@ -1081,7 +1091,7 @@
     textarea.value = "";
     wrap.style.display = "block";
     textarea.focus();
-    showToast("Вставьте JSON в поле ниже");
+    showToast("✍️ Вставьте JSON в поле ниже");
   }
 
   async function applyImportedConfig(){
@@ -1094,12 +1104,12 @@
         await persist();
         render();
         closeConfig();
-        showToast("Конфигурация применена!");
+        showToast("✅ Конфигурация применена!");
       } else {
-        showToast("Некорректный JSON");
+        showToast("⚠️ Некорректный JSON");
       }
     } catch(e) {
-      showToast("Ошибка чтения JSON");
+      showToast("⚠️ Ошибка чтения JSON");
     }
   }
 
@@ -1121,7 +1131,7 @@
         const floor = getFloor();
         floor.rooms.forEach(r => r.people.forEach(p => { p.present = true; p.weekend = false; }));
         persist(); closeReport(); render();
-        showToast("Отметки сброшены");
+        showToast("🔄 Отметки сброшены");
       }
     };
 
